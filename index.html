@@ -1,0 +1,45 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Masters Swim</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#06111f;--c:#0f1e31;--c2:#182b43;--line:#24405f;--t:#f5f8ff;--m:#91a6c0;--a:#3bbcff;--g:#59d7a8;--r:#ff7187}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(#06111f,#09192b);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.wrap{max-width:520px;margin:auto;min-height:100vh;padding:20px 17px 100px}.top{display:flex;justify-content:space-between;align-items:center}.logo{font-weight:900;letter-spacing:.6px}.logo span{color:var(--a)}.avatar{width:45px;height:45px;border-radius:50%;background:var(--c2);display:grid;place-items:center;font-weight:900;border:1px solid var(--line)}
+h1{font-size:29px;margin:23px 0 4px}.mut{color:var(--m);font-size:13px}.card{background:var(--c);border:1px solid var(--line);border-radius:22px;padding:17px;margin:13px 0}.label{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--m)}.title{font-size:20px;font-weight:850;margin:7px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.metric{background:var(--c2);padding:14px;border-radius:17px}.big{font-size:25px;font-weight:900}.btn{width:100%;border:0;border-radius:14px;background:var(--a);color:#001522;font-weight:850;padding:13px;margin-top:11px;font-size:14px}.secondary{background:var(--c2);color:white;border:1px solid var(--line)}
+input{width:100%;padding:13px;margin-top:10px;border:1px solid var(--line);border-radius:14px;background:var(--c2);color:white;font-size:15px}.row{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid #1d3652}.row:last-child{border:0}
+.badge{color:var(--g);background:#59d7a817;border-radius:10px;padding:6px 9px;font-size:11px}.progress{height:8px;background:#1b304a;border-radius:8px;overflow:hidden;margin-top:9px}.bar{height:100%;background:var(--a)}.screen{display:none}.screen.on{display:block}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(520px,100%);display:flex;background:#091727f5;border-top:1px solid var(--line);padding:10px 3px calc(13px + env(safe-area-inset-bottom))}.nav button{flex:1;background:none;border:0;color:var(--m);font-size:10px}.nav b{display:block;font-size:19px}.nav .on{color:var(--a)}#app{display:none}.error{color:var(--r);font-size:13px;margin-top:10px}
+</style></head><body><div class="wrap">
+<div class="top"><div class="logo">MASTERS <span>SWIM</span></div><div class="avatar">DC</div></div>
+<section id="login"><h1>Sign in</h1><div class="mut">Masters Swim Athlete Platform</div><div class="card"><input id="email" type="email" placeholder="Email"><input id="password" type="password" placeholder="Password"><button class="btn" onclick="signIn()">Войти</button><div id="err" class="error"></div></div></section>
+<div id="app">
+<section id="home" class="screen on"><div class="mut" style="margin-top:20px">Добро пожаловать,</div><h1 id="name">Athlete</h1><div id="meta" class="mut"></div>
+<div class="card"><div class="label">Следующая тренировка</div><div class="title">Tuesday · 07:30</div><div class="mut">Breaststroke · Race Pace</div><button class="btn" onclick="go('training')">Открыть тренировку</button></div>
+<div class="card"><div class="label">Personal bests</div><div id="results" class="grid" style="margin-top:12px"></div></div>
+<div class="card"><div class="label">Главная цель</div><div class="title">World Masters Champion</div><div class="mut">50 / 100 Breaststroke</div><div class="progress"><div class="bar" style="width:72%"></div></div></div>
+<div class="card"><div class="label">Video Lab</div><div class="title">Разбор техники</div><div class="mut">Загрузите старт, поворот или полный заплыв.</div><button class="btn secondary" onclick="go('video')">Upload Video</button></div></section>
+
+<section id="training" class="screen"><h1>Training</h1><div class="mut">План спортсмена</div><div class="card"><div class="label">Tuesday · Sprint</div><div class="title">Breaststroke Race Pace</div><div class="row"><span>Warm-up</span><b>600 m</b></div><div class="row"><span>Technique</span><b>8×25</b></div><div class="row"><span>Race pace</span><b>2×(4×25)</b></div><div class="row"><span>Start + breakout</span><b>6 reps</b></div><div class="row"><span>Cool-down</span><b>300 m</b></div><button class="btn" onclick="alert('Completed ✓')">Завершить</button></div></section>
+
+<section id="video" class="screen"><h1>Video Lab</h1><div class="mut">Подготовка видео к анализу</div><div class="card"><div class="label">New video</div><input id="videoFile" type="file" accept="video/*"><input id="videoTitle" placeholder="Например: 50 m Breaststroke"><button class="btn" onclick="queueVideo()">Добавить видео</button><div id="uploadStatus" class="mut" style="margin-top:10px"></div></div><div class="card"><div class="label">Последний разбор</div><div class="title">50 m Breaststroke</div><div class="row"><span>Start</span><span class="badge">GOOD</span></div><div class="row"><span>Breakout</span><span class="badge">IMPROVE</span></div><div class="mut" style="margin-top:10px">Coach note: фокус на первом цикле после выхода.</div></div></section>
+
+<section id="progress" class="screen"><h1>Progress</h1><div class="mut">Результаты из Supabase</div><div id="progressList"></div></section>
+<section id="profile" class="screen"><h1>Profile</h1><div class="card"><div id="profileRows"></div></div><button class="btn secondary" onclick="signOut()">Выйти</button></section>
+</div></div>
+<nav id="nav" class="nav" style="display:none"><button class="on" data-id="home" onclick="go('home',this)"><b>⌂</b>Home</button><button data-id="training" onclick="go('training',this)"><b>◫</b>Training</button><button data-id="video" onclick="go('video',this)"><b>▶</b>Video</button><button data-id="progress" onclick="go('progress',this)"><b>↗</b>Progress</button><button data-id="profile" onclick="go('profile',this)"><b>●</b>Profile</button></nav>
+<script>
+const sb=window.supabase.createClient('https://okigwjigytauhtpkrvwc.supabase.co','sb_publishable_bPkN_daGQ71NzEEZ1TrXwA_HqJstb6L'); let athlete=null, resultData=[];
+async function signIn(){err.textContent='';let x=await sb.auth.signInWithPassword({email:email.value.trim(),password:password.value});if(x.error){err.textContent=x.error.message;return}loadApp(x.data.user)}
+async function loadApp(user){login.style.display='none';app.style.display='block';nav.style.display='flex';
+let p=await sb.from('profiles').select('*').eq('id',user.id).single(); if(p.error) return alert(p.error.message);
+let a=await sb.from('athletes').select('*').eq('user_id',user.id).single(); if(a.error) return alert(a.error.message); athlete=a.data;
+name.textContent=p.data.full_name||p.data.email;meta.textContent=(athlete.age_group||'Masters')+' · '+(athlete.main_stroke||'Swimming')+' · '+(p.data.country||'');
+profileRows.innerHTML='<div class="row"><span>Name</span><b>'+name.textContent+'</b></div><div class="row"><span>Club</span><b>'+(athlete.club||'—')+'</b></div><div class="row"><span>Category</span><b>'+(athlete.age_group||'—')+'</b></div><div class="row"><span>Stroke</span><b>'+(athlete.main_stroke||'—')+'</b></div>';
+let r=await sb.from('results').select('*').eq('athlete_id',athlete.id).order('time_seconds',{ascending:true});resultData=r.data||[];renderResults()}
+function fmt(v){v=Number(v);return v>=60?Math.floor(v/60)+':'+(v%60).toFixed(2).padStart(5,'0'):v.toFixed(2)}
+function renderResults(){results.innerHTML=resultData.map(x=>'<div class="metric"><div class="big">'+fmt(x.time_seconds)+'</div><div class="mut">'+x.event+' · '+x.course+'</div></div>').join('');progressList.innerHTML=resultData.map(x=>'<div class="card"><div class="label">'+x.event+' · '+x.course+'</div><div class="title">'+fmt(x.time_seconds)+'</div><div class="mut">'+(x.competition||'')+'</div><div class="progress"><div class="bar" style="width:82%"></div></div></div>').join('')}
+function go(id,btn){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('on'));document.getElementById(id).classList.add('on');document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('on'));let b=btn||document.querySelector('[data-id="'+id+'"]');if(b)b.classList.add('on');scrollTo(0,0)}
+function queueVideo(){let f=videoFile.files[0];uploadStatus.textContent=f?'Выбрано: '+f.name+'. Следующим этапом подключим реальную загрузку в Supabase Storage.':'Сначала выберите видео.'}
+async function signOut(){await sb.auth.signOut();app.style.display='none';nav.style.display='none';login.style.display='block';password.value=''}
+(async()=>{let s=await sb.auth.getSession();if(s.data.session)loadApp(s.data.session.user)})();
+</script></body></html>
