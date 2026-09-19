@@ -42,4 +42,5 @@ function go(id,btn){document.querySelectorAll('.screen').forEach(x=>x.classList.
 function queueVideo(){let f=videoFile.files[0];uploadStatus.textContent=f?'Выбрано: '+f.name+'. Следующим этапом подключим реальную загрузку в Supabase Storage.':'Сначала выберите видео.'}
 async function signOut(){await sb.auth.signOut();app.style.display='none';nav.style.display='none';login.style.display='block';password.value=''}
 (async()=>{let s=await sb.auth.getSession();if(s.data.session)loadApp(s.data.session.user)})();
-</script></body></html>
+</script></body></html
+                  
