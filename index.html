@@ -20,7 +20,7 @@ input,select,textarea{width:100%;padding:13px;margin:6px 0 14px;border:1px solid
 </head>
 <body>
 <div class="wrap">
-<header class="top"><div><div class="logo">PB <span>LAP</span></div><div class="version">ЛИЧНЫЙ ПРОГРЕСС · V1.3.1 TEST</div></div><div id="avatar" class="avatar" aria-hidden="true">PB</div></header>
+<header class="top"><div><div class="logo">PB <span>LAP</span></div><div class="version">ЛИЧНЫЙ ПРОГРЕСС · V1.3.2 TEST</div></div><div id="avatar" class="avatar" aria-hidden="true">PB</div></header>
 <p id="bootStatus" class="mut" role="status">Проверяем вход…</p>
 <noscript><p class="error">Для работы PB LAP включите JavaScript в браузере.</p></noscript>
 <section id="login" hidden><h1>С возвращением</h1><p class="mut">Войдите в свой профиль спортсмена.</p><form id="loginForm" class="card"><label for="email">Email</label><input id="email" type="email" autocomplete="username" placeholder="you@example.com" required><label for="password">Пароль</label><input id="password" type="password" autocomplete="current-password" required><button id="registerButton" class="btn secondary" type="button">Создать аккаунт</button><button id="signInButton" class="btn" type="submit">Войти</button><p id="authError" class="error" role="alert"></p></form></section>
@@ -244,7 +244,7 @@ function buildTraining(event){
  try{
   if(errors.athlete_events)throw new Error('Не удалось загрузить дистанции. Обнови данные перед составлением тренировки.');
   if(data.athlete_events.filter(e=>e.priority==='primary').length>1)throw Error('В профиле несколько основных дистанций. Выбери одну для плана во вкладке «Профиль»; остальные останутся дополнительными.');
-  if(!records('settings').length)throw Error('Сначала проверь исходные данные в блоке выше.');
+  requireTrainingSettings(records('settings')[0]?.payload);
   const primary=data.athlete_events.find(e=>e.priority==='primary')||data.athlete_events[0];
   trainingDraft=makeTraining({pool:Number($('trainingPool').value),minutes:Number($('trainingMinutes').value),theme:$('trainingTheme').value,stroke:primary?.stroke||athlete.main_stroke||'freestyle',event:primary,goals:errors.goals?[]:data.goals});
   trainingOwner=athlete.id;trainingPayload=null;trainingSavedId=null;$('trainingNotice').textContent='';renderTraining();
@@ -310,6 +310,47 @@ const eventOptions=()=>selectField('event_id','Дистанция',data.athlete_
 const eventResultName=e=>e.distance_m+' '+(e.environment==='open_water'?'OW':({freestyle:'FR',breaststroke:'BR',backstroke:'BK',butterfly:'FL',individual_medley:'IM',medley:'IM'}[e.stroke]||e.stroke));
 function canonicalResultName(value){return String(value||'').trim().replace(/\s+/g,' ').replace(/\b(Breaststroke|Брасс)$/i,'BR').replace(/\b(Freestyle|Free)$/i,'FR').replace(/\b(Backstroke|BA)$/i,'BK').replace(/\bButterfly$/i,'FL').replace(/\b(Individual Medley|Medley|individual_medley)$/i,'IM');}
 function sourceLabel(s){return ({official_result:'Официальный результат',manual:'Вручную',manual_entry:'Вручную',athlete:'Спортсмен',external_coach:'Внешний тренер',external_platform:'Внешняя платформа',device:'Устройство',pblap:'PB LAP'})[s]||s||'Источник не указан';}
+// Only the latest settings snapshot is authoritative; cleared fields must not reappear from history.
+const hasSetting=v=>v!==null&&v!==undefined&&String(v).trim()!=='';
+function limitationState(s){return ['unknown','none','described'].includes(s.limitations_status)?s.limitations_status:hasSetting(s.limitations)?'described':'unknown';}
+function settingsFields(s){
+ const definitions=[
+ ['days','Тренировок в неделю','number','required min="0" max="14"'],
+ ['weekly_m','Текущий объём за неделю, м','number','required min="0" max="200000" step="1"'],
+ ['minutes','Доступное время на одно занятие, мин','number','required min="0" max="240"'],
+ ['schedule','Дни и время занятий','text','maxlength="300"'],
+ ['experience','Опыт плавания','text','required maxlength="200"'],
+ ['gym','Зал / силовая подготовка','text','maxlength="200"']];
+ const missing=[],known=[];
+ for(const [key,label,type,attrs] of definitions){const html=inputField(key,label,type,attrs,s[key]??'');(hasSetting(s[key])?known:missing).push(html);}
+ const status=limitationState(s);
+ const limits='<label for="f_limitations_status">Ограничения и самочувствие</label><select id="f_limitations_status" name="limitations_status">'+[['unknown','Пока не указано'],['none','Подтверждаю: ограничений нет'],['described','Есть ограничения / комментарий']].map(([v,l])=>'<option value="'+v+'"'+(status===v?' selected':'')+'>'+esc(l)+'</option>').join('')+'</select>'+area('limitations','Уточнение ограничений и самочувствия',s.limitations??'')+'<p class="mut">Пустое поле не означает отсутствие ограничений. Если ограничений нет, выбери это явно; если есть — опиши их.</p>';
+ (status==='unknown'?missing:known).push(limits);
+ return (missing.length?'<p>Дополнить недостающие данные</p>'+missing.join(''):'<p>Все поля заполнены. При изменениях раскрой сохранённые данные ниже.</p>')+(known.length?'<details><summary>Уже сохранено — проверить или изменить</summary>'+known.join('')+'</details>':'');
+}
+function settingsPayload(f){
+ const status=oneOf(f.limitations_status||'unknown',['unknown','none','described'],'ограничения');
+ const limitations=String(f.limitations??'').trim();
+ if(status==='described'&&!limitations)throw Error('Опиши ограничения или выбери «Пока не указано».');
+ if(status==='none'&&limitations)throw Error('В комментарии есть текст. Выбери «Есть ограничения / комментарий» или очисти его, чтобы подтвердить отсутствие ограничений.');
+ if(status==='unknown'&&limitations)throw Error('Для заполненного комментария выбери «Есть ограничения / комментарий».');
+ return {version:2,source:'athlete',days:nonnegative(f.days,14),weekly_m:nonnegative(f.weekly_m,200000),minutes:nonnegative(f.minutes,240),schedule:String(f.schedule??'').trim(),experience:requiredText(f.experience,'Опыт',200),gym:String(f.gym??'').trim(),limitations,limitations_status:status};
+}
+function requireTrainingSettings(s){
+ if(!s)throw Error('Сначала проверь исходные данные в блоке выше.');
+ let days,minutes;
+ try{days=nonnegative(s.days,14);minutes=nonnegative(s.minutes,240);nonnegative(s.weekly_m,200000);}catch(e){throw Error('Укажи текущий объём, целое число занятий и доступное время в исходных данных.');}
+ if(days===0||minutes===0)throw Error('Сейчас указано 0 занятий или 0 минут. Перед подготовкой тренировки подтверди доступные дни и время.');
+ if(limitationState(s)==='unknown')throw Error('Уточни ограничения и самочувствие: опиши их или явно подтверди отсутствие.');
+ if(limitationState(s)==='described'&&!hasSetting(s.limitations))throw Error('Добавь описание ограничений и самочувствия.');
+ if(limitationState(s)==='none'&&hasSetting(s.limitations))throw Error('Проверь ограничения: подтверждено отсутствие, но есть комментарий.');
+ return s;
+}
+function settingsSummary(s){
+ const display=(value,suffix='')=>hasSetting(value)?String(value)+suffix:'Не указано';
+ const status=limitationState(s);
+ return row('Тренировок в неделю',display(s.days))+row('Текущий объём в неделю',display(s.weekly_m,' м'))+row('Время одного занятия',display(s.minutes,' мин'))+row('Расписание',display(s.schedule))+row('Опыт',display(s.experience))+row('Зал',display(s.gym))+row('Ограничения',status==='none'?'Отсутствие подтверждено спортсменом':status==='described'?display(s.limitations):'Не указаны — отсутствие не подтверждено');
+}
 function renderConnected(){
  if(linkOwner!==user?.id){linkOwner=user?.id;$('linkOutput').innerHTML='';$('videoPlayer').innerHTML='';$('videoForm').reset();$('videoStatus').textContent='';videoDraft=null;extraDraft=null;$('extraEditor').close();}
  const linked=(data.telegram_users||[]).length>0;
@@ -320,7 +361,7 @@ function renderConnected(){
  $('createAthlete').disabled=!user||loading||saving;
  $('editAthlete').disabled=!athlete||loading||saving;
  const settings=records('settings')[0]?.payload;
- $('preparation').innerHTML=settings?row('Дней в неделю',settings.days)+row('Текущий объём в неделю',settings.weekly_m+' м')+row('Время занятия',settings.minutes+' мин')+row('Опыт',settings.experience)+row('Зал',settings.gym)+row('Ограничения',settings.limitations||'Не указаны')+button('settings','Изменить исходные данные'):empty('Перед составлением тренировки проверь расписание, текущую нагрузку и ограничения.')+button('settings','Подготовка к тренировкам');
+ $('preparation').innerHTML=settings?settingsSummary(settings)+button('settings','Изменить исходные данные'):empty('Перед составлением тренировки проверь расписание, текущую нагрузку и ограничения.')+button('settings','Подготовка к тренировкам');
  const model=data.athlete_events?.find(e=>e.priority==='primary')||data.athlete_events?.[0];
  $('eventModel').innerHTML=model?modelMarkup(model):empty('Добавь основную дистанцию в профиле.');
  $('calculationList').innerHTML=errors.pblap_records?empty(errors.pblap_records):records('cs').map(r=>'<article class="item"><h3>CS: '+Number(r.payload.metric.cs).toFixed(3)+' м/с · '+esc(fmt(100/r.payload.metric.cs))+'/100 м</h3><p class="mut">'+esc(date(r.created_at))+' · '+esc(r.payload.raw.course)+' · '+esc(tr(r.payload.raw.stroke))+'</p><p>Сопоставимость входов подтверждена спортсменом. Автоматический допуск по давности не установлен.</p><details><summary>Исходные данные и метод</summary><pre style="white-space:pre-wrap">'+esc(JSON.stringify(r.payload,null,2))+'</pre></details></article>').join('')||empty('CS появится после выбора пригодных 200 и 400 м одного стиля и бассейна.');
@@ -359,7 +400,7 @@ function calculateCS(a,b,confirmed){
 function openExtra(kind,id){
  if(!athlete||!user||loading||saving)return;
  let title='',hint='',fields='';const settings=records('settings')[0]?.payload||{};
- if(kind==='settings'){title='Подготовка к тренировкам';hint='Проверь цели во вкладке «План». Эти данные сохранятся в профиле; автоматическая периодизация пока не рассчитывается.';fields=inputField('days','Тренировок в неделю','number','required min="1" max="14"',settings.days||3)+inputField('weekly_m','Текущий объём за неделю, м','number','required min="0" max="200000" step="50"',settings.weekly_m??3000)+inputField('minutes','Доступное время, мин','number','required min="15" max="240"',settings.minutes||45)+inputField('schedule','Дни и время занятий','text','maxlength="300"',settings.schedule||'')+inputField('experience','Опыт плавания','text','required maxlength="200"',settings.experience||'')+inputField('gym','Зал / силовая подготовка','text','maxlength="200"',settings.gym||'')+area('limitations','Ограничения и самочувствие',settings.limitations||'');}
+ if(kind==='settings'){title='Подготовка к тренировкам';hint='Известные данные уже подставлены и доступны ниже. Дополняй только недостающее. Укажи 0, если сейчас нет занятий, объёма или доступного времени. Автоматическая периодизация пока не рассчитывается.';fields=settingsFields(settings);}
  if(kind==='profile'){title='Данные спортсмена';fields=inputField('club','Клуб','text','maxlength="200"',athlete.club||'')+inputField('birth_date','Дата рождения (необязательно)','date','',athlete.birth_date||'')+strokeField()+area('bio','О себе',athlete.bio||'');}
  if(kind==='goal-edit'){const g=data.goals.find(g=>g.id===id);if(!g)return;title='Изменить цель';fields=inputField('target_time_seconds','Целевое время','text','required',fmt(g.target_time_seconds))+inputField('target_date','Срок (необязательно)','date','',g.target_date||'')+inputField('competition','Соревнование','text','maxlength="200"',g.competition||'')+selectField('status','Статус',[['active','Активная'],['completed','Достигнута']]);}
  if(kind==='result'){title='Записать результат';hint='PB и история обновятся на сайте и в Telegram. 50 м SCM и LCM остаются разными событиями.';fields=eventOptions()+timeField('time_seconds','Время')+dateField('competition_date','Дата заплыва')+inputField('competition','Соревнование или контрольный заплыв','text','required maxlength="200"')+selectField('source','Источник',[['manual_entry','Ручная запись'],['official_result','Официальный протокол']])+inputField('source_url','Ссылка на протокол (если есть)','url','maxlength="2000"');}
@@ -375,7 +416,7 @@ function openExtra(kind,id){
 function extraPayload(d,f){
  const base={id:d.uuid,athlete_id:d.athleteId};
  const record=(kind,payload)=>({table:'pblap_records',body:{...base,kind,payload}});
- if(d.kind==='settings')return record('settings',{version:1,days:integer(f.days,'Количество занятий',14),weekly_m:nonnegative(f.weekly_m,200000),minutes:integer(f.minutes,'Время',240),schedule:f.schedule,experience:requiredText(f.experience,'Опыт',200),gym:f.gym,limitations:f.limitations});
+ if(d.kind==='settings')return record('settings',settingsPayload(f));
  if(d.kind==='profile')return {table:'athletes',update:true,body:{club:f.club||null,birth_date:validDate(f.birth_date,false),main_stroke:oneOf(f.stroke,strokes.map(x=>x[0]),'стиль'),bio:f.bio||null}};
  if(d.kind==='goal-edit')return {table:'goals',update:true,body:{target_time_seconds:parseTime(f.target_time_seconds),target_date:validDate(f.target_date,false),competition:f.competition||null,status:oneOf(f.status,['active','completed'],'статус')}};
  if(d.kind==='result'){const e=data.athlete_events.find(x=>x.id===f.event_id);if(!e)throw Error('Добавь дистанцию в профиле.');if(e.course==='SCY')throw Error('Сохранение результатов в ярдах пока не поддерживается базой.');if(f.source_url&&!/^https?:\/\//i.test(f.source_url))throw Error('Ссылка должна начинаться с https:// или http://.');return {table:'results',body:{...base,event:eventResultName(e),course:e.environment==='open_water'?null:e.course,time_seconds:parseTime(f.time_seconds),competition_date:validDate(f.competition_date),competition:requiredText(f.competition,'Название',200),source:f.source,source_url:f.source_url||null}};}
