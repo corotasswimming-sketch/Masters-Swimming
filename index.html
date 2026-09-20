@@ -15,19 +15,20 @@ input,select,textarea{width:100%;padding:13px;margin:6px 0 14px;border:1px solid
 .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(620px,100%);display:flex;background:#091727f5;border-top:1px solid var(--line);padding:8px 3px calc(10px + env(safe-area-inset-bottom));backdrop-filter:blur(15px)}.nav button{flex:1;min-width:0;background:none;border:0;color:var(--m);font-size:11px;min-height:48px;border-radius:10px}.nav b{display:block;font-size:19px;line-height:1.25}.nav button[aria-current="page"]{color:var(--a);background:#3bbcff0c}.actions{display:flex;gap:10px}.actions .btn{margin-top:0}.intro{margin-top:22px}.nowrap{white-space:nowrap}@media(max-width:360px){.wrap{padding-left:12px;padding-right:12px}.card{padding:14px}.big{font-size:22px}.nav button{font-size:10px}}
 
 .editor{width:min(560px,calc(100% - 24px));max-height:calc(100dvh - 32px);overflow-y:auto;background:var(--c);color:var(--t);border:1px solid var(--line);border-radius:22px;padding:22px}.editor::backdrop{background:#000b}.editor fieldset{margin:0;padding:0;border:0;min-width:0}.editor textarea{resize:vertical;min-height:90px}.editor .actions{margin-top:16px}.editor select:focus-visible,.editor textarea:focus-visible,summary:focus-visible{outline:3px solid var(--a)}.editor-hint{margin-bottom:18px}.success{color:var(--g);font-size:14px}.small-btn{font-size:13px;padding:10px}.attempts{background:var(--c2);padding:10px 12px;border-radius:12px;margin-top:10px}.attempts p{margin:5px 0}.editor input,.editor select,.editor textarea{min-width:0}summary{cursor:pointer;color:var(--a)}
+.training-set{padding:20px 0;border-bottom:1px solid var(--line)}.training-set:last-of-type{margin-bottom:18px}.training-set small{font-size:14px;color:var(--m)}#trainingOutput h2{margin:10px 0 18px}#trainingOutput a{color:var(--a)}#trainingForm .grid>div{min-width:0}
 </style>
 </head>
 <body>
 <div class="wrap">
-<header class="top"><div><div class="logo">PB <span>LAP</span></div><div class="version">ЛИЧНЫЙ ПРОГРЕСС · V1.1</div></div><div id="avatar" class="avatar" aria-hidden="true">PB</div></header>
+<header class="top"><div><div class="logo">PB <span>LAP</span></div><div class="version">ЛИЧНЫЙ ПРОГРЕСС · V1.2</div></div><div id="avatar" class="avatar" aria-hidden="true">PB</div></header>
 <p id="bootStatus" class="mut" role="status">Проверяем вход…</p>
 <noscript><p class="error">Для работы PB LAP включите JavaScript в браузере.</p></noscript>
 <section id="login" hidden><h1>С возвращением</h1><p class="mut">Войдите в свой профиль спортсмена.</p><form id="loginForm" class="card"><label for="email">Email</label><input id="email" type="email" autocomplete="username" placeholder="you@example.com" required><label for="password">Пароль</label><input id="password" type="password" autocomplete="current-password" required><button id="signInButton" class="btn" type="submit">Войти</button><p id="authError" class="error" role="alert"></p></form></section>
 <main id="app" hidden>
 <p id="saveNotice" class="success" role="status" aria-live="polite"></p>
 <div class="intro actions"><button id="refreshButton" class="btn secondary" type="button">Обновить данные</button></div><p id="loadStatus" class="mut" role="status" aria-live="polite"></p><p id="loadError" class="error" role="alert"></p>
-<section id="today" class="screen"><h1>Сегодня</h1><p id="greeting" class="mut"></p><div class="card"><div class="label">Фокус подготовки</div><div id="todayPlan"></div><button class="btn" data-go="plan">Открыть план</button></div><div class="card"><h2>Цели</h2><div id="todayGoals"></div></div><div class="card"><h2>Личные рекорды</h2><div id="bestResults"></div></div><div class="card"><h2>Понять свой результат</h2><p class="mut">Тестирования, показатели и персональные зоны.</p><button class="btn secondary" data-go="analysis">Перейти к анализу</button></div></section>
-<section id="plan" class="screen" hidden><h1>План</h1><p class="mut">Сохранённые планы подготовки и цели.</p><div class="card"><h2>Подготовка</h2><div id="planList"></div></div><div class="card"><h2>Цели спортсмена</h2><div id="goalList"></div><button class="btn secondary" data-add="goal" disabled>Добавить цель</button></div></section>
+<section id="today" class="screen"><h1>Сегодня</h1><p id="greeting" class="mut"></p><div class="card"><h2>Тренировка на сегодня</h2><div id="todayWorkouts"></div><p>Разминка, техника, основная серия и заминка под доступное время.</p><button class="btn" data-go="plan">Составить тренировку</button></div><div class="card"><div class="label">Фокус подготовки</div><div id="todayPlan"></div><button class="btn" data-go="plan">Открыть план</button></div><div class="card"><h2>Цели</h2><div id="todayGoals"></div></div><div class="card"><h2>Личные рекорды</h2><div id="bestResults"></div></div><div class="card"><h2>Понять свой результат</h2><p class="mut">Тестирования, показатели и персональные зоны.</p><button class="btn secondary" data-go="analysis">Перейти к анализу</button></div></section>
+<section id="plan" class="screen" hidden><h1>План</h1><p class="mut">Сохранённые планы подготовки и цели.</p><div class="card"><h2>Твоя тренировка</h2><form id="trainingForm"><div class="grid"><div><label for="trainingPool">Бассейн</label><select id="trainingPool"><option value="25">25 м · SCM</option><option value="50">50 м · LCM</option></select></div><div><label for="trainingMinutes">Время</label><select id="trainingMinutes"><option value="30">30 минут</option><option value="45" selected>45 минут</option><option value="60">60 минут</option></select></div></div><details><summary>Изменить тип тренировки</summary><label for="trainingTheme">Задача занятия</label><select id="trainingTheme"><option value="technique">Техника и ровное плавание</option><option value="easy">Лёгкая аэробная работа</option><option value="rhythm">Ритм основной дистанции</option></select></details><button id="buildTraining" class="btn" type="submit" disabled>Составить тренировку</button><p id="trainingError" class="error" role="alert"></p></form><p id="trainingEmpty" class="mut"></p></div><div id="trainingOutput" class="card" aria-live="polite"></div><button id="saveTraining" class="btn" hidden>Сохранить тренировку</button><p id="trainingNotice" class="mut" role="status"></p><div class="card"><h2>Мои тренировки</h2><div id="savedWorkouts"></div></div><div class="card"><h2>Подготовка</h2><div id="planList"></div></div><div class="card"><h2>Цели спортсмена</h2><div id="goalList"></div><button class="btn secondary" data-add="goal" disabled>Добавить цель</button></div></section>
 <section id="analysis" class="screen" hidden><h1>Анализ</h1><p class="mut">Данные тестов и оценки результативности.</p><div class="card"><h2>Тестирование</h2><div id="assessmentList"></div><button class="btn secondary" data-add="assessment" disabled>Добавить тестирование</button></div><div class="card"><h2>Видеоанализ</h2><span class="badge">Загрузка не подключена</span><p>Для видео пока не настроена загрузка.</p><p class="mut">Загрузка видео будет доступна после подключения хранилища. Автоматический AI-анализ пока не подключён.</p><button class="btn secondary" disabled>Загрузка видео недоступна</button></div><div class="card"><h2>Профиль результативности</h2><p class="mut">Сохранённые показатели. Оценки не рассчитываются автоматически.</p><div id="metricList"></div><button class="btn secondary" data-add="metric" disabled>Добавить показатель</button></div><div class="card"><h2>Тренировочные зоны Z1–Z7</h2><p class="mut">Персональные диапазоны из вашего профиля.</p><div id="zoneList"></div><button class="btn secondary" data-add="zone" disabled>Добавить зону</button></div></section>
 <section id="progress" class="screen" hidden><h1>Прогресс</h1><p class="mut">Личные рекорды и все сохранённые результаты.</p><div class="card"><h2>Лучшие результаты по дистанциям</h2><div id="progressBest"></div></div><div class="card"><h2>Результаты</h2><div id="resultList"></div></div></section>
 <section id="profile" class="screen" hidden><h1>Профиль</h1><div class="card"><h2>Спортсмен</h2><div id="profileRows"></div></div><div class="card"><h2>Специализация</h2><div id="eventList"></div><button class="btn secondary" data-add="event" disabled>Добавить дистанцию</button></div><p class="mut">PB LAP v1.1 · данные спортсмена</p><button id="signOutButton" class="btn secondary">Выйти</button><p id="signOutError" class="error" role="alert"></p></section>
@@ -46,7 +47,7 @@ input,select,textarea{width:100%;padding:13px;margin:6px 0 14px;border:1px solid
 // Existing project and public browser key retained from the supplied index.html.
 const SUPABASE_URL = 'https://okigwjigytauhtpkrvwc.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_bPkN_daGQ71NzEEZ1TrXwA_HqJstb6L';
-const TABLES = ['results','athlete_events','goals','assessments','performance_metrics','training_zones','training_plans','test_attempts'];
+const TABLES = ['results','athlete_events','goals','assessments','performance_metrics','training_zones','training_plans','test_attempts','workouts'];
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const present = value => value !== null && value !== undefined && value !== '';
@@ -61,12 +62,13 @@ const newest = (rows,field) => [...rows].sort((a,b)=>String(b[field]||b.created_
 let sb=null, user=null, profile=null, athlete=null, data={}, errors={}, profileIssue='', athleteIssue='', generation=0, loading=false;
 function resetData(){profile=null;athlete=null;data={};errors={};profileIssue='';athleteIssue='';TABLES.forEach(t=>data[t]=[]);}
 function state(table, message){if(!user)return empty('Войдите, чтобы увидеть данные.');if(errors[table])return '<p class="error">'+esc(errors[table])+'</p>';if(!athlete)return empty(athleteIssue || 'Профиль спортсмена ещё не создан.');return data[table].length ? null : empty(message);}
-function eventLabel(x){return [present(x.distance_m)?x.distance_m+' '+(x.course==='SCY'?'ярд':'м'):null,present(x.stroke)?tr(x.stroke):null,x.course].filter(Boolean).join(' · ') || 'Дистанция не указана';}
+function eventLabel(x){if(x.environment==='open_water')return (Number(x.distance_m)>=1000?Number(x.distance_m)/1000+' км':x.distance_m+' м')+' · Open Water';return [present(x.distance_m)?x.distance_m+' '+(x.course==='SCY'?'ярд':'м'):null,present(x.stroke)?tr(x.stroke):null,x.course].filter(Boolean).join(' · ') || 'Дистанция не указана';}
 function goalHTML(g){const event=data.athlete_events.find(e=>e.id===g.event_id);return '<article class="item"><div class="label">'+esc(tr(g.goal_type))+'</div><div class="title">'+(present(g.target_time_seconds)?esc(fmt(g.target_time_seconds))+' <small>с / мин:с</small>':'Время не задано')+'</div><p>'+esc(event?eventLabel(event):(g.event_id?'Дистанция недоступна':'Общая цель'))+'</p>'+ (g.competition?'<p class="mut">'+esc(g.competition)+'</p>':'')+'<p class="mut">Срок: '+esc(date(g.target_date))+(g.status?' · '+esc(tr(g.status)):'')+'</p></article>';}
 function planHTML(p){return '<article class="item"><span class="badge">'+esc(tr(p.status))+'</span><div class="title">'+esc(p.title||'План подготовки')+'</div>'+(p.phase?'<p class="mut">Этап: '+esc(p.phase)+'</p>':'')+'<p>'+esc(p.main_goal||'Цель плана не указана')+'</p><p class="mut">'+esc(date(p.start_date))+' — '+esc(date(p.end_date))+'</p></article>';}
-function bests(){const groups=new Map();for(const r of data.results){const n=number(r.time_seconds);if(n===null||n<=0||!r.event||!r.course)continue;const key=JSON.stringify([r.event,r.course]);if(!groups.has(key)||n<Number(groups.get(key).time_seconds))groups.set(key,r);}return [...groups.values()].sort((a,b)=>String(a.event).localeCompare(String(b.event),'ru')||String(a.course).localeCompare(String(b.course)));}
-function bestHTML(){const s=state('results','Результатов пока нет. Личные рекорды появятся после добавления результатов.');if(s)return s;const rows=bests();return rows.length?'<div class="grid">'+rows.map(r=>'<div class="metric"><div class="big">'+esc(fmt(r.time_seconds))+'</div><div class="mut">'+esc(r.event)+' · '+esc(r.course)+'</div></div>').join('')+'</div>':empty('Для сравнения нужны время, дистанция и длина бассейна.');}
+function bests(){const groups=new Map();for(const r of data.results){const n=number(r.time_seconds);if(n===null||n<=0||!r.event||(!r.course&&!/ OW$/.test(r.event)))continue;const key=JSON.stringify([r.event,r.course]);if(!groups.has(key)||n<Number(groups.get(key).time_seconds))groups.set(key,r);}return [...groups.values()].sort((a,b)=>String(a.event).localeCompare(String(b.event),'ru')||String(a.course).localeCompare(String(b.course)));}
+function bestHTML(){const s=state('results','Результатов пока нет. Личные рекорды появятся после добавления результатов.');if(s)return s;const rows=bests();return rows.length?'<div class="grid">'+rows.map(r=>'<div class="metric"><div class="big">'+esc(fmt(r.time_seconds))+'</div><div class="mut">'+esc(r.event)+' · '+esc(r.course||'Open Water')+'</div></div>').join('')+'</div>':empty('Для сравнения нужны время, дистанция и длина бассейна.');}
 function render(){
+ renderTraining();
  document.querySelectorAll('[data-add]').forEach(b=>b.disabled=!athlete||loading||saving); 
  const fullName=profile?.full_name||profile?.email||user?.email||'Спортсмен';
  $('avatar').textContent=fullName.split(/[\s@]+/).slice(0,2).map(s=>s.charAt(0)).join('').toUpperCase()||'PB';
@@ -81,7 +83,7 @@ function render(){
  $('goalList').innerHTML=state('goals','Целей пока нет.')||goals.map(goalHTML).join('');
  $('todayGoals').innerHTML=state('goals','Целей пока нет.')||goals.slice(0,2).map(goalHTML).join('')+(goals.length>2?'<button class="btn secondary" data-go="plan">Все цели</button>':'');
  $('bestResults').innerHTML=bestHTML();$('progressBest').innerHTML=bestHTML();
- $('resultList').innerHTML=state('results','Сохранённых результатов пока нет.')||[...data.results].sort((a,b)=>String(a.event||'').localeCompare(String(b.event||''),'ru')||String(a.course||'').localeCompare(String(b.course||''))||(number(a.time_seconds)??Infinity)-(number(b.time_seconds)??Infinity)).map(r=>'<article class="item"><div class="label">'+esc(r.event||'Дистанция не указана')+' · '+esc(r.course||'Бассейн не указан')+'</div><div class="title">'+esc(fmt(r.time_seconds))+'</div><p class="mut">'+esc(r.competition||'Соревнование не указано')+'</p></article>').join('');
+ $('resultList').innerHTML=state('results','Сохранённых результатов пока нет.')||[...data.results].sort((a,b)=>String(a.event||'').localeCompare(String(b.event||''),'ru')||String(a.course||'').localeCompare(String(b.course||''))||(number(a.time_seconds)??Infinity)-(number(b.time_seconds)??Infinity)).map(r=>'<article class="item"><div class="label">'+esc(r.event||'Дистанция не указана')+' · '+esc(r.course||(/ OW$/.test(r.event||'')?'Open Water':'Бассейн не указан'))+'</div><div class="title">'+esc(fmt(r.time_seconds))+'</div><p class="mut">'+esc(r.competition||'Соревнование не указано')+'</p></article>').join('');
  $('eventList').innerHTML=state('athlete_events','Специализация пока не указана.')||[...data.athlete_events].sort((a,b)=>(a.priority==='primary'?0:1)-(b.priority==='primary'?0:1)).map(e=>'<article class="item"><h3>'+esc(eventLabel(e))+'</h3><p class="mut">'+esc(tr(e.priority))+' · '+esc(tr(e.environment))+'</p></article>').join('');
  $('assessmentList').innerHTML=state('assessments','Тестирования пока не добавлены.')||newest(data.assessments,'assessment_date').map(a=>'<article class="item"><h3>'+esc(tr(a.assessment_type))+'</h3><span class="badge">'+esc(tr(a.status))+'</span><p class="mut">'+esc(date(a.assessment_date))+' · '+esc(tr(a.stroke))+' · '+esc(a.course||'—')+'</p>'+(a.notes?'<p>'+esc(a.notes)+'</p>':'')+attemptHTML(a)+'</article>').join('');
  $('metricList').innerHTML=state('performance_metrics','Показателей пока нет. Здесь появятся сохранённые измерения.')||newest(data.performance_metrics,'metric_date').map(m=>'<article class="item"><div class="label">'+esc(tr(m.metric_type))+'</div><div class="title">'+esc(number(m.value)===null?'—':Number(m.value).toLocaleString('ru-RU'))+' '+esc(m.unit||'')+'</div><p class="mut">'+esc(eventLabel(m))+' · '+esc(date(m.metric_date))+'</p><p class="mut">Источник: '+esc(tr(m.source))+(m.confidence?' · Достоверность: '+esc(tr(m.confidence)):'')+'</p></article>').join('');
@@ -187,6 +189,113 @@ async function saveEntry(event){
  }finally{if(editorState===draft||editorState===null){saving=false;$('entryFields').disabled=!!editorState?.payload;$('saveEntry').disabled=false;$('cancelEntry').disabled=false;$('refreshButton').disabled=loading;$('signOutButton').disabled=false;}}
 }
 $('entryForm').addEventListener('submit',saveEntry);$('cancelEntry').addEventListener('click',()=>closeEditor());$('editor').addEventListener('cancel',event=>{event.preventDefault();closeEditor();});
+
+// PB LAP training templates v1. These are general sessions, not calibrated physiological zones.
+const TRAINING_TITLES={technique:'Техника и ровное плавание',easy:'Лёгкая аэробная работа',rhythm:'Ритм основной дистанции'};
+let trainingDraft=null, trainingOwner=null;
+function makeTraining({pool,minutes,theme,stroke,event,goals}){
+ if(![25,50].includes(pool)||![30,45,60].includes(minutes)||!Object.hasOwn(TRAINING_TITLES,theme))throw new Error('Выберите бассейн, время и тип тренировки.');
+ const supported=['freestyle','breaststroke','backstroke'];
+ // Butterfly/IM profiles start with an easy freestyle session until a specialist template is available.
+ const specialty=supported.includes(stroke)?stroke:'freestyle';
+ const style={freestyle:'Вольный стиль',breaststroke:'Брасс',backstroke:'На спине'}[specialty];
+ const techniques={freestyle:'Спокойный выдох в воду, ровное положение тела. Не ускоряй гребки ради скорости.',breaststroke:'Сохраняй последовательность: гребок — вдох — толчок ногами — скольжение. Не затягивай паузу.',backstroke:'Голова неподвижна, корпус поворачивается вместе с плечами. Сохраняй ровный ритм.'};
+ const index=[30,45,60].indexOf(minutes);
+ const techniqueCount=[4,6,8][index];
+ const rows=[{name:'Разминка',repeats:4,distance:50,stroke:'Любой комфортный стиль',rest:15,effort:'Легко · 2–3 из 10',cue:'Начни спокойно. Каждый отрезок заканчивай без одышки.'}];
+ rows.push({name:'Техника',repeats:techniqueCount,distance:50,stroke:style,rest:20,effort:'Легко · 3 из 10',cue:techniques[specialty]});
+ if(theme==='easy')rows.push({name:'Основная серия',repeats:[4,8,11][index],distance:100,stroke:'Вольный стиль или на спине',rest:25,effort:'Умеренно · 4 из 10',cue:'Держи одинаковое спокойное усилие. Если 100 м непрерывно пока много, раздели каждый отрезок на 2 × 50 м с тем же отдыхом.'});
+ if(theme==='technique')rows.push({name:'Основная серия',repeats:[8,16,22][index],distance:50,stroke:style+' / вольный стиль',rest:25,effort:'Умеренно · 4–5 из 10',cue:'Нечётные отрезки — выбранным стилем, чётные — легко вольным. Следи, чтобы техника оставалась устойчивой до конца.'});
+ if(theme==='rhythm')rows.push({name:'Основная серия',repeats:[8,16,22][index],distance:50,stroke:style+' / вольный стиль',rest:35,effort:'Контролируемо · 5–6 из 10',cue:'Нечётные отрезки — выбранным стилем с ровным ритмом, чётные — легко вольным. Это не спринт на максимум.'});
+ rows.push({name:'Заминка',repeats:2,distance:50,stroke:'Любой комфортный стиль',rest:15,effort:'Очень легко · 2 из 10',cue:'Плавно снижай усилие, завершай спокойно.'});
+ const total=rows.reduce((sum,r)=>sum+r.repeats*r.distance,0);
+ const totalRest=rows.reduce((sum,r)=>sum+Math.max(0,r.repeats-1)*r.rest,0);
+ return {version:1,title:TRAINING_TITLES[theme],pool,minutes,theme,style,rows,total,totalRest,
+  focus:event?eventLabel(event):style,
+  goals:(goals||[]).filter(g=>g.status==='active'&&g.event_id===event?.id).map(g=>({time:g.target_time_seconds,date:g.target_date})),
+  adapted:specialty!==stroke,
+  createdAt:new Date().toISOString()};
+}
+function trainingMarkup(w){
+ const goal=w.goals.length?'<p class="mut">Цель профиля: '+w.goals.map(g=>esc(fmt(g.time))+(g.date?' к '+esc(date(g.date)):'')).join('; ')+'.</p>':'';
+ return '<div class="label">Тренировка на сегодня</div><h2>'+esc(w.title)+'</h2><div class="grid"><div class="metric"><div class="big">'+w.total+' м</div><div class="mut">Объём по серии</div></div><div class="metric"><div class="big">'+w.minutes+' мин</div><div class="mut">Доступное время</div></div></div><p>'+esc(w.focus)+' · бассейн '+w.pool+' м</p>'+goal+
+ '<p class="mut">Время — лимит занятия, а не расчёт по PB. За 5 минут до конца переходи к заминке, даже если основная серия не закончена.</p>'+
+ (w.adapted?'<p class="mut">Для этого стиля пока используется базовая тренировка вольным стилем.</p>':'')+
+ w.rows.map((r,i)=>'<article class="training-set"><div class="label">'+(i+1)+' · '+esc(r.name)+'</div><div class="title">'+r.repeats+' × '+r.distance+' м <small>· '+r.repeats*r.distance+' м</small></div><p>'+esc(r.stroke)+'</p><div class="badge">'+esc(r.effort)+'</div><p class="mut">'+r.distance/w.pool+' '+(r.distance/w.pool===1?'длина':'длины')+' бассейна на отрезок · отдых '+r.rest+' с после каждого отрезка</p><p>'+esc(r.cue)+'</p></article>').join('')+
+ '<details><summary>Как читать тренировку</summary><p>4 × 50 м — проплыви 50 м четыре раза. Отдых отсчитывается после касания стенки, а не от старта.</p><p>Усилие: 2–3 из 10 — легко; 4–5 — умеренно; 6 — ощутимо, но под контролем. Это оценка по ощущениям, а не персональные зоны Z1–Z7. Если техника распадается, снизь усилие или сократи серию.</p><p class="mut">Структура: разминка, техника, основная серия и заминка. <a href="https://www.usms.org/fitness-and-training/articles-and-videos/articles/how-to-write-a-swimming-workout" target="_blank" rel="noopener">О структуре тренировок — U.S. Masters Swimming</a>. Серии PB LAP составлены отдельно.</p></details>'+
+ '<p class="mut">'+(trainingSavedId?'Тренировка сохранена.':'Сохрани тренировку, чтобы открыть её позже.')+'</p>';
+}
+function renderTraining(){
+ const ready=!!user&&!!athlete&&!loading&&!saving;
+ $('buildTraining').disabled=!ready||!!(trainingPayload&&!trainingSavedId);
+ $('saveTraining').hidden=!trainingDraft; $('saveTraining').disabled=!ready||!!trainingSavedId; $('saveTraining').textContent=trainingSavedId?'Сохранено':trainingPayload?'Повторить сохранение':'Сохранить тренировку';
+ $('savedWorkouts').innerHTML=savedWorkoutsMarkup();
+ $('todayWorkouts').innerHTML=savedWorkoutsMarkup(data.workouts.filter(w=>w.workout_date===localDate()));
+ $('trainingEmpty').textContent=!athlete?'Тренировка станет доступна после загрузки профиля спортсмена.':'Выбери бассейн и время. Основной стиль возьмём из профиля.';
+ if(trainingOwner!==athlete?.id){trainingDraft=null;trainingPayload=null;trainingSavedId=null;trainingOwner=athlete?.id;$('trainingOutput').innerHTML='';$('trainingNotice').textContent='';}
+ $('trainingOutput').hidden=!trainingDraft;
+ if(trainingDraft){$('trainingOutput').innerHTML=trainingMarkup(trainingDraft);$('trainingEmpty').hidden=true;}else $('trainingEmpty').hidden=false;
+}
+function buildTraining(event){
+ event.preventDefault();if(!user||!athlete||loading||saving||(trainingPayload&&!trainingSavedId))return;
+ $('trainingError').textContent='';
+ try{
+  if(errors.athlete_events)throw new Error('Не удалось загрузить дистанции. Обнови данные перед составлением тренировки.');
+  const primary=data.athlete_events.find(e=>e.priority==='primary')||data.athlete_events[0];
+  trainingDraft=makeTraining({pool:Number($('trainingPool').value),minutes:Number($('trainingMinutes').value),theme:$('trainingTheme').value,stroke:primary?.stroke||athlete.main_stroke||'freestyle',event:primary,goals:errors.goals?[]:data.goals});
+  trainingOwner=athlete.id;trainingPayload=null;trainingSavedId=null;$('trainingNotice').textContent='';renderTraining();
+ }catch(e){$('trainingError').textContent=e.message||'Не удалось составить тренировку.';}
+}
+$('trainingForm').addEventListener('submit',buildTraining);
+
+let trainingPayload=null, trainingSavedId=null;
+function trainingDescription(w){
+ return ['PB LAP · '+w.title, 'Бассейн: '+w.pool+' м · время: '+w.minutes+' мин · объём: '+w.total+' м',
+ 'Фокус: '+w.focus,'За 5 минут до конца переходи к заминке. Время не рассчитано по PB.',
+ ...w.rows.map((r,i)=>'\n'+(i+1)+'. '+r.name+' — '+r.repeats+' × '+r.distance+' м\n'+r.stroke+' · '+r.effort+' · отдых '+r.rest+' с\n'+r.cue),
+ '\nСубъективная интенсивность, не персональные зоны Z1–Z7.'].join('\n');
+}
+function savedWorkoutsMarkup(rows=data.workouts){
+ const status=state('workouts','Сохранённых тренировок пока нет.');
+ if(status)return status;
+ if(!rows.length)return empty('На сегодня ещё нет сохранённых тренировок.');
+ return newest(rows,'workout_date').map(w=>'<article class="item"><span class="badge">'+esc(tr(w.status))+'</span><h3>'+esc(w.title)+'</h3><p class="mut">'+esc(date(w.workout_date))+' · '+esc(w.total_distance??'—')+' м</p><details><summary>Открыть тренировку</summary><p style="white-space:pre-wrap">'+esc(w.description||'Описание не задано.')+'</p></details>'+(w.status==='planned'&&w.workout_type==='pblap_v1'&&!w.coach_id?'<button class="btn secondary" data-complete-workout="'+esc(w.id)+'" '+(saving?'disabled':'')+'>Отметить выполненной</button>':'')+'</article>').join('');
+}
+async function saveTraining(){
+ if(!trainingDraft||!user||!athlete||saving||trainingSavedId)return;
+ const owner=user.id, aid=athlete.id, draft=trainingDraft;
+ if(!trainingPayload)trainingPayload={id:crypto.randomUUID(),athlete_id:aid,coach_id:null,title:draft.title,workout_type:'pblap_v1',workout_date:localDate(),description:trainingDescription(draft),total_distance:draft.total,status:'planned'};
+ const payload=trainingPayload;
+ if(payload.athlete_id!==aid)return;
+ saving=true;render();$('trainingNotice').textContent='Сохраняем тренировку…';
+ try{
+  const record=await saveRecord('workouts',payload);
+  if(user?.id!==owner||athlete?.id!==aid||trainingDraft!==draft)return;
+  data.workouts=[...data.workouts.filter(w=>w.id!==record.id),record];delete errors.workouts;
+  trainingSavedId=record.id;$('trainingNotice').textContent='Тренировка сохранена в профиле.';
+ }catch(e){
+  if(user?.id!==owner||athlete?.id!==aid)return;
+  if(e?.code&&e.code!=='23505')trainingPayload=null;
+  $('trainingNotice').textContent='Сохранение не подтверждено. '+(e?.message||'Попробуй ещё раз.');
+ }finally{if(user?.id===owner){saving=false;render();}}
+}
+async function completeWorkout(id){
+ if(!user||!athlete||saving)return;
+ const w=data.workouts.find(r=>r.id===id);
+ if(!w||w.workout_type!=='pblap_v1'||w.coach_id)return;
+ const owner=user.id,aid=athlete.id;
+ saving=true;render();$('trainingNotice').textContent='Сохраняем отметку…';
+ try{
+  const r=await sb.from('workouts').update({status:'completed'}).eq('id',id).eq('athlete_id',aid).eq('workout_type','pblap_v1').select('*').single();
+  if(r.error)throw r.error;
+  if(!r.data||r.data.id!==id||r.data.athlete_id!==aid||r.data.status!=='completed')throw new Error('Подтверждение не получено.');
+  if(user?.id!==owner||athlete?.id!==aid)return;
+  data.workouts=data.workouts.map(item=>item.id===id?r.data:item);$('trainingNotice').textContent='Выполнение записано.';
+ }catch(e){if(user?.id===owner)$('trainingNotice').textContent='Не удалось подтвердить отметку. '+(e?.message||'Повтори запрос.');}
+ finally{if(user?.id===owner){saving=false;render();}}
+}
+$('saveTraining').addEventListener('click',saveTraining);
+document.addEventListener('click',event=>{const b=event.target.closest('button[data-complete-workout]');if(b&&!b.disabled)completeWorkout(b.dataset.completeWorkout);});
 
 $('loginForm').addEventListener('submit',signIn);$('signOutButton').addEventListener('click',signOut);$('refreshButton').addEventListener('click',loadData);document.addEventListener('click',event=>{const button=event.target.closest('button[data-go]');if(button)go(button.dataset.go);const add=event.target.closest('button[data-add]');if(add&&!add.disabled)openEditor(add.dataset.add,add.dataset.assessment);});
 (async()=>{try{if(!window.supabase)throw new Error('Не удалось загрузить библиотеку входа. Проверьте интернет и перезагрузите страницу.');sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);let authChanged=false, authRevision=0;sb.auth.onAuthStateChange((event,session)=>{if(event==='INITIAL_SESSION')return;authChanged=true;const revision=++authRevision;if(event==='SIGNED_OUT'){showSession(null);return;}if(session?.user&&session.user.id!==user?.id)setTimeout(()=>{if(revision===authRevision&&sb&&(!user||user.id!==session.user.id))showSession(session.user);},0);});const r=await sb.auth.getSession();if(r.error)throw r.error;if(!authChanged)showSession(r.data.session?.user||null);}catch(e){$('bootStatus').hidden=true;$('login').hidden=false;$('authError').textContent=e?.message||'Не удалось проверить вход.';if(!sb)$('signInButton').disabled=true;}})();
