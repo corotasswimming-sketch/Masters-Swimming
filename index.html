@@ -529,6 +529,53 @@ function calculateCS(a,b,confirmed){
 }
 function keySetReportFields(w){
   const req=w?.structured_plan?.report_requirements;
+  if(!req)return '';
+
+  const main=w?.structured_plan?.intake_session?.main;
+  const firstSet=Array.isArray(main)?main[0]:null;
+
+  const planned=Number(
+    req.key_set_planned_reps ?? firstSet?.reps
+  );
+
+  const distance=Number(
+    req.key_set_distance_m ?? firstSet?.distance_m
+  );
+
+  if(!Number.isInteger(planned)||planned<1||planned>30)return '';
+
+  if(req.record_each_rep){
+    let html='<h3>Ключевая серия · '+esc(
+      planned+'×'+(Number.isFinite(distance)?distance+' м':'')
+    )+'</h3>';
+
+    html+='<p class="mut">Запиши время каждого отрезка.</p>';
+
+    for(let i=1;i<=planned;i++){
+      html+=inputField(
+        'key_rep_'+i,
+        'Отрезок '+i,
+        'text',
+        'inputmode="decimal" maxlength="12" placeholder="Например: 31.20"'
+      );
+    }
+
+    return html;
+  }
+
+  return '<h3>Ключевая серия · '+esc(
+    planned+'×'+(Number.isFinite(distance)?distance+' м':'')
+  )+'</h3>'+
+  '<p class="mut">Укажи, сколько ключевых повторов удалось выполнить.</p>'+
+  inputField(
+    'key_set_completed_reps',
+    'Выполнено повторов',
+    'number',
+    'required min="0" max="'+planned+'" step="1"',
+    planned
+  );
+}
+  const req=w?.structured_plan?.report_requirements;
 
   if(!req?.record_each_rep)return '';
 
@@ -576,6 +623,83 @@ function keySetReportFields(w){
  if(kind==='profile')$('f_stroke').value=athlete.main_stroke||'freestyle';
 }
 function keySetReportPayload(w,f){
+  const req=w?.structured_plan?.report_requirements;
+
+  if(!req){
+    return {
+      key_set_results:null,
+      key_set_planned_reps:null,
+      key_set_completed_reps:null
+    };
+  }
+
+  const main=w?.structured_plan?.intake_session?.main;
+  const firstSet=Array.isArray(main)?main[0]:null;
+
+  const planned=Number(
+    req.key_set_planned_reps ?? firstSet?.reps
+  );
+
+  const distance=Number(
+    req.key_set_distance_m ?? firstSet?.distance_m
+  );
+
+  if(!Number.isInteger(planned)||planned<1){
+    return {
+      key_set_results:null,
+      key_set_planned_reps:null,
+      key_set_completed_reps:null
+    };
+  }
+
+  // Для обычной ключевой серии сохраняем только количество выполненных повторов.
+  if(!req.record_each_rep){
+    const completed=nonnegative(
+      f.key_set_completed_reps,
+      planned
+    );
+
+    return {
+      key_set_results:[],
+      key_set_planned_reps:planned,
+      key_set_completed_reps:completed
+    };
+  }
+
+  // Для RP100 и других серий с записью каждого отрезка
+  // сохраняем времена каждого повтора.
+  const results=[];
+
+  for(let i=1;i<=planned;i++){
+    const raw=String(f['key_rep_'+i]??'').trim();
+
+    if(raw){
+      results.push({
+        rep:i,
+        distance_m:Number.isFinite(distance)?distance:null,
+        seconds:parseTime(raw)
+      });
+    }
+  }
+
+  if(f.completion==='full'&&results.length!==planned){
+    throw Error(
+      'Для полного выполнения запиши время каждого отрезка ключевой серии.'
+    );
+  }
+
+  if(f.completion==='skipped'&&results.length){
+    throw Error(
+      'Для пропущенной тренировки времена ключевой серии должны быть пустыми.'
+    );
+  }
+
+  return {
+    key_set_results:results,
+    key_set_planned_reps:planned,
+    key_set_completed_reps:results.length
+  };
+}
   const req=w?.structured_plan?.report_requirements;
 
   if(!req?.record_each_rep){
