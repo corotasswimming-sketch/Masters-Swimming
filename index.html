@@ -128,7 +128,7 @@ function fmt(value){const n=number(value);if(n===null || n<0)return '—';const 
 function date(value){if(!present(value))return '—';const d=new Date(/^\d{4}-\d{2}-\d{2}$/.test(String(value))?value+'T12:00:00':value);return Number.isNaN(d.getTime())?'—':d.toLocaleDateString(languageLocale());}
 const newest = (rows,field) => [...rows].sort((a,b)=>String(b[field]||b.created_at||'').localeCompare(String(a[field]||a.created_at||'')));
 let sb=null, user=null, profile=null, athlete=null, data={}, errors={}, profileIssue='', athleteIssue='', generation=0, loading=false;
-function resetData(){profile=null;athlete=null;data={};errors={};profileIssue='';athleteIssue='';TABLES.forEach(t=>data[t]=[]);}
+function resetData(){profile=null;athlete=null;data={};errors={};profileIssue='';athleteIssue='';TABLES.forEach(t=>data[t]=[]);data.workout_analysis=[];}
 function state(table, message){if(!user)return empty(lt('Войдите, чтобы увидеть данные.'));if(errors[table])return '<p class="error">'+esc(errors[table])+'</p>';if(!athlete)return empty(athleteIssue || lt('Профиль спортсмена ещё не создан.'));return data[table].length ? null : empty(message);}
 function eventLabel(x){if(x.environment==='open_water')return (Number(x.distance_m)>=1000?Number(x.distance_m)/1000+lt(' км'):x.distance_m+lt(' м'))+' · Open Water';return [present(x.distance_m)?x.distance_m+' '+(x.course==='SCY'?lt('ярд'):lt('м')):null,present(x.stroke)?tr(x.stroke):null,x.course].filter(Boolean).join(' · ') || lt('Дистанция не указана');}
 function goalHTML(g){const event=data.athlete_events.find(e=>e.id===g.event_id);return '<article class="item"><div class="label">'+esc(tr(g.goal_type))+'</div><div class="title">'+(present(g.target_time_seconds)?esc(fmt(g.target_time_seconds))+lt(' <small>с / мин:с</small>'):lt('Время не задано'))+'</div><p>'+esc(event?eventLabel(event):(g.event_id?lt('Дистанция недоступна'):lt('Общая цель')))+'</p>'+ (g.competition?'<p class="mut">'+esc(g.competition)+'</p>':'')+lt('<p class="mut">Срок: ')+esc(date(g.target_date))+(g.status?' · '+esc(tr(g.status)):'')+'</p>'+button('goal-edit',lt('Изменить цель'),g.id)+'</article>';}
@@ -176,7 +176,18 @@ async function loadData(){if(!sb||!user||saving)return;loading=true;const token=
  const p=response[0].status==='fulfilled'?response[0].value:{error:response[0].reason};const a=response[1].status==='fulfilled'?response[1].value:{error:response[1].reason};
  profile=p.data||null;athlete=a.data||null;profileIssue=p.error?tableError('profiles',p.error):(!profile?lt('Профиль пользователя ещё не заполнен.'):'');athleteIssue=a.error?tableError('athletes',a.error):(!athlete?lt('Профиль спортсмена ещё не создан. Создайте его во вкладке «Профиль», затем свяжите Telegram.'):'');
  if(athlete){const athleteId=athlete.id;await Promise.all(TABLES.map(async table=>{try{const rows=await readRows(table,athleteId);if(token===generation)data[table]=rows;}catch(e){if(token===generation)errors[table]=tableError(table,e);}}));}
- if(token!==generation)return;render();const hasErrors=Object.keys(errors).length||profileIssue||athleteIssue;$('loadStatus').textContent=hasErrors?lt('Данные загружены не полностью. Подробности — в соответствующих разделах.'):lt('Обновлено в ')+new Date().toLocaleTimeString(languageLocale(),{hour:'2-digit',minute:'2-digit'});
+ if(athlete){
+  const analysisResult=await sb.rpc('pblap_athlete_workout_analysis');
+
+  if(token===generation){
+    if(analysisResult.error){
+      errors.workout_analysis=tableError('workout_analysis',analysisResult.error);
+    }else{
+      data.workout_analysis=analysisResult.data||[];
+    }
+  }
+}
+   if(token!==generation)return;render();const hasErrors=Object.keys(errors).length||profileIssue||athleteIssue;$('loadStatus').textContent=hasErrors?lt('Данные загружены не полностью. Подробности — в соответствующих разделах.'):lt('Обновлено в ')+new Date().toLocaleTimeString(languageLocale(),{hour:'2-digit',minute:'2-digit'});
  }catch(e){if(token===generation)$('loadError').textContent=lt('Не удалось загрузить данные. ')+(e?.message||lt('Попробуйте ещё раз.'));}
  finally{if(token===generation){loading=false;$('refreshButton').disabled=false;render();}}
 }
