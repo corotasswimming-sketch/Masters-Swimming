@@ -351,11 +351,49 @@ function workoutPlanLabel(w){
 
   return (w?.total_distance??'—')+lt(' м');
 }
+  function workoutAnalysisMarkup(w){
+  const a=(data.workout_analysis||[]).find(x=>x.workout_id===w.id);
+  const rp=a?.rp100_calibration;
+
+  if(!rp)return '';
+
+  if(rp.status==='valid'&&rp.working_rp100){
+    const p=rp.working_rp100;
+
+    return '<div class="attempts">'+
+      '<strong>🎯 RP100 откалиброван</strong>'+
+      '<p>Рабочий диапазон: <b>'+
+      Number(p.fast_boundary_seconds_per_50).toFixed(2)+
+      '–'+
+      Number(p.slow_boundary_seconds_per_50).toFixed(2)+
+      ' с / 50 м</b></p>'+
+      '<p class="mut">Центр диапазона: '+
+      Number(p.center_seconds_per_50).toFixed(2)+
+      ' с / 50 м · бассейн '+
+      esc(rp.pool_m??'—')+
+      ' м</p></div>';
+  }
+
+  if(rp.status==='unstable'){
+    return '<div class="attempts">'+
+      '<strong>⚠️ Калибровка RP100 не завершена</strong>'+
+      '<p>'+esc(rp.reason||'Темп серии был недостаточно стабильным.')+'</p>'+
+      '<p class="mut">Повтори калибровочную серию.</p></div>';
+  }
+
+  if(rp.status==='incomplete'){
+    return '<div class="attempts">'+
+      '<strong>Калибровка RP100 не завершена</strong>'+
+      '<p>'+esc(rp.reason||'Не хватает результатов ключевой серии.')+'</p></div>';
+  }
+
+  return '';
+}
   function savedWorkoutsMarkup(rows=data.workouts){
  const status=state('workouts',lt('Сохранённых тренировок пока нет.'));
  if(status)return status;
  if(!rows.length)return empty(lt('На сегодня ещё нет сохранённых тренировок.'));
- return newest(rows,'workout_date').map(w=>'<article class="item"><span class="badge">'+esc(tr(w.status))+'</span><h3>'+esc(w.title)+'</h3><p class="mut">'+esc(date(w.workout_date))+' · '+esc(workoutPlanLabel(w))+lt('</p><details><summary>Открыть тренировку</summary><p style="white-space:pre-wrap">')+esc(w.description||lt('Описание не задано.'))+'</p></details>'+executionMarkup(w)+(['planned','completed','skipped'].includes(w.status)?'<button class="btn secondary" data-complete-workout="'+esc(w.id)+'" '+(saving?'disabled':'')+lt('>Записать выполнение</button>'):'')+'</article>').join('');
+ return newest(rows,'workout_date').map(w=>'<article class="item"><span class="badge">'+esc(tr(w.status))+'</span><h3>'+esc(w.title)+'</h3><p class="mut">'+esc(date(w.workout_date))+' · '+esc(workoutPlanLabel(w))+lt('</p><details><summary>Открыть тренировку</summary><p style="white-space:pre-wrap">')+esc(w.description||lt('Описание не задано.'))+'</p></details>'+workoutAnalysisMarkup(w)+executionMarkup(w)+(['planned','completed','skipped'].includes(w.status)?'<button class="btn secondary" data-complete-workout="'+esc(w.id)+'" '+(saving?'disabled':'')+lt('>Записать выполнение</button>'):'')+'</article>').join('');
 }
 async function saveTraining(){
  if(!trainingDraft||!user||!athlete||saving||trainingSavedId)return;
