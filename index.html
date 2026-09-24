@@ -478,7 +478,37 @@ function calculateCS(a,b,confirmed){
  if(!(t200>0&&t400>t200)||t400<=2*t200)throw Error(lt('Эта пара не даёт правдоподобного двухточечного CS: проверь результаты и сопоставимость.'));
  return {version:1,protocol:'CS 200+400 v1',method:'CS=(400-200)/(t400-t200)',raw:{result200:{...a},result400:{...b},stroke:x.stroke,course:a.course,comparability_confirmed_by:'athlete'},metric:{cs:200/(t400-t200),unit:'m/s'},finding:lt('Двухточечная оценка CS по выбранным данным.'),confidence:lt('Сопоставимость подтверждена пользователем; автоматические допуски не утверждены'),training_implication:lt('Аэробный ориентир вместе с раскладкой и механикой. Не LT/MLSS и не автоматическое назначение темпа.')};
 }
-function openExtra(kind,id){
+function keySetReportFields(w){
+  const req=w?.structured_plan?.report_requirements;
+
+  if(!req?.record_each_rep)return '';
+
+  const main=w?.structured_plan?.intake_session?.main;
+  if(!Array.isArray(main))return '';
+
+  const set=main.find(x=>
+    Number(x?.distance_m)===Number(req.distance_m) &&
+    String(x?.instruction||'').toUpperCase().includes(String(req.metric||'').toUpperCase())
+  );
+
+  const reps=Number(set?.reps);
+  if(!Number.isInteger(reps)||reps<1||reps>30)return '';
+
+  let html='<h3>Ключевая серия · '+esc(reps+'×'+req.distance_m+' м')+'</h3>';
+  html+='<p class="mut">Запиши время каждого отрезка.</p>';
+
+  for(let i=1;i<=reps;i++){
+    html+=inputField(
+      'key_rep_'+i,
+      'Отрезок '+i,
+      'text',
+      'inputmode="decimal" maxlength="12" placeholder="Например: 31.20"'
+    );
+  }
+
+  return html;
+}
+  function openExtra(kind,id){
  if(!athlete||!user||loading||saving)return;
  let title='',hint='',fields='';const settings=records('settings')[0]?.payload||{};
  if(kind==='settings'){title=lt('Подготовка к тренировкам');hint=lt('Известные данные уже подставлены и доступны ниже. Дополняй только недостающее. Укажи 0, если сейчас нет занятий, объёма или доступного времени. Автоматическая периодизация пока не рассчитывается.');fields=settingsFields(settings);}
@@ -486,7 +516,7 @@ function openExtra(kind,id){
  if(kind==='goal-edit'){const g=data.goals.find(g=>g.id===id);if(!g)return;title=lt('Изменить цель');fields=inputField('target_time_seconds',lt('Целевое время'),'text','required',fmt(g.target_time_seconds))+inputField('target_date',lt('Срок (необязательно)'),'date','',g.target_date||'')+inputField('competition',lt('Соревнование'),'text','maxlength="200"',g.competition||'')+selectField('status',lt('Статус'),[['active',lt('Активная')],['completed',lt('Достигнута')]]);}
  if(kind==='result'){title=lt('Записать результат');hint=lt('PB и история обновятся на сайте и в Telegram. 50 м SCM и LCM остаются разными событиями.');fields=eventOptions()+timeField('time_seconds',lt('Время'))+dateField('competition_date',lt('Дата заплыва'))+inputField('competition',lt('Соревнование или контрольный заплыв'),'text','required maxlength="200"')+selectField('source',lt('Источник'),[['manual_entry',lt('Ручная запись')],['official_result',lt('Официальный протокол')]])+inputField('source_url',lt('Ссылка на протокол (если есть)'),'url','maxlength="2000"');}
  if(kind==='external'){title=lt('Добавить свою тренировку');hint=lt('Сохраняется исходное задание. Фактическое выполнение запишешь отдельно.');fields=inputField('title',lt('Название'),'text','required maxlength="200"')+dateField('workout_date',lt('Дата'))+inputField('total_distance',lt('Плановый объём, м'),'number','required min="0" max="100000"')+selectField('source',lt('Источник'),[['athlete',lt('Моя тренировка')],['external_coach',lt('Внешний тренер')],['external_platform',lt('Внешняя платформа')],['device',lt('Устройство (ручной перенос)')]])+area('description',lt('Задание: серии, стиль, отдых, интенсивность'));}
- if(kind==='execution'){const w=data.workouts.find(x=>x.id===id);if(!w)return;title=lt('Отчёт о тренировке');hint=w.title+lt(' · план ')+workoutPlanLabel(w)+lt('. Плановое задание останется без изменений.');fields=selectField('completion',lt('Выполнение'),[['full',lt('Полностью')],['partial',lt('Частично')],['skipped',lt('Пропущена')]])+inputField('actual_m',lt('Фактически проплыл, м (для зала можно оставить пустым)'),'number','min="0" max="100000"')+inputField('minutes',lt('Фактическое время, мин'),'number','required min="0" max="1440"')+inputField('rpe',lt('Ощущаемая нагрузка, 0–10'),'number','required min="0" max="10"')+area('feedback',lt('Самочувствие, выполненные серии и изменения'));}
+ if(kind==='execution'){const w=data.workouts.find(x=>x.id===id);if(!w)return;title=lt('Отчёт о тренировке');hint=w.title+lt(' · план ')+workoutPlanLabel(w)+lt('. Плановое задание останется без изменений.');fields=selectField('completion',lt('Выполнение'),[['full',lt('Полностью')],['partial',lt('Частично')],['skipped',lt('Пропущена')]])+inputField('actual_m',lt('Фактически проплыл, м (для зала можно оставить пустым)'),'number','min="0" max="100000"')+inputField('minutes',lt('Фактическое время, мин'),'number','required min="0" max="1440"')+inputField('rpe',lt('Ощущаемая нагрузка, 0–10'),'number','required min="0" max="10"')+area('feedback',lt('Самочувствие, выполненные серии и изменения'))+keySetReportFields(w);;}
  if(kind==='race'){title=lt('Разобрать заплыв по сплитам');hint=lt('Каждая строка: длина участка в метрах и время именно этого участка. Пример: 50 32.40. Не накопленное время. Видео необязательно.');fields=eventOptions()+dateField('date',lt('Дата'))+selectField('source',lt('Источник'),[['official_result',lt('Официальные сплиты')],['manual_entry',lt('Ручной хронометраж')]])+area('splits',lt('Участки и времена'))+area('context',lt('Условия, источник, течение/волны/группа для Open Water'));}
  if(kind==='cs'){title=lt('CS по существующим 200 + 400 м');hint=lt('Выбери результаты одного стиля и бассейна, соответствующие текущей форме. Разная давность показана в списке. Допуск по срокам ещё не утверждён.');const opts=d=>data.results.filter(r=>parseResult(r)?.distance===d&&r.time_seconds>0).map(r=>[r.id,r.event+' '+r.course+' · '+fmt(r.time_seconds)+' · '+date(r.competition_date)+' · '+sourceLabel(r.source)]);fields=selectField('r200',lt('Результат 200 м'),opts(200))+selectField('r400',lt('Результат 400 м'),opts(400))+lt('<label><input type="checkbox" name="confirmed" required> Подтверждаю максимальные усилия, актуальность и сопоставимость условий</label>');}
  if(kind==='quality'){title=lt('Качество видео');hint=lt('Самопроверка доступности измерений. Невидимая отметка не становится измеренной после подтверждения. AI-анализ не запускался.');fields=inputField('fps',lt('Частота кадров (если известна)'),'number','min="1" max="1000"')+selectField('camera',lt('Камера'),[['fixed',lt('Фиксированная')],['moving',lt('Движущаяся / зум')]])+selectField('visible15',lt('Видны старт и отметка 15 м?'),[['no',lt('Нет / не уверен')],['yes',lt('Да')]])+selectField('walls',lt('Видны стены и спортсмен?'),[['no',lt('Не полностью')],['yes',lt('Да')]])+selectField('complete',lt('Запись полная?'),[['no',lt('Есть пропуски')],['yes',lt('Да')]])+area('notes',lt('Ракурс, бассейн, видимые контрольные отметки'));}
@@ -494,7 +524,69 @@ function openExtra(kind,id){
  extraDraft={kind,id,owner:user.id,athleteId:athlete.id,uuid:crypto.randomUUID(),payload:null};$('extraTitle').textContent=title;$('extraHint').textContent=hint;$('extraFields').innerHTML=fields;$('extraFields').disabled=false;$('extraError').textContent='';$('extraSave').disabled=false;$('extraSave').textContent=lt('Сохранить');$('extraEditor').showModal();
  if(kind==='profile')$('f_stroke').value=athlete.main_stroke||'freestyle';
 }
-function extraPayload(d,f){
+function keySetReportPayload(w,f){
+  const req=w?.structured_plan?.report_requirements;
+
+  if(!req?.record_each_rep){
+    return {
+      key_set_results:null,
+      key_set_planned_reps:null,
+      key_set_completed_reps:null
+    };
+  }
+
+  const main=w?.structured_plan?.intake_session?.main;
+  if(!Array.isArray(main)){
+    return {
+      key_set_results:null,
+      key_set_planned_reps:null,
+      key_set_completed_reps:null
+    };
+  }
+
+  const set=main.find(x=>
+    Number(x?.distance_m)===Number(req.distance_m) &&
+    String(x?.instruction||'').toUpperCase().includes(String(req.metric||'').toUpperCase())
+  );
+
+  const planned=Number(set?.reps);
+  if(!Number.isInteger(planned)||planned<1){
+    return {
+      key_set_results:null,
+      key_set_planned_reps:null,
+      key_set_completed_reps:null
+    };
+  }
+
+  const results=[];
+
+  for(let i=1;i<=planned;i++){
+    const raw=String(f['key_rep_'+i]??'').trim();
+
+    if(raw){
+      results.push({
+        rep:i,
+        distance_m:Number(req.distance_m),
+        seconds:parseTime(raw)
+      });
+    }
+  }
+
+  if(f.completion==='full'&&results.length!==planned){
+    throw Error('Для полного выполнения запиши время каждого отрезка ключевой серии.');
+  }
+
+  if(f.completion==='skipped'&&results.length){
+    throw Error('Для пропущенной тренировки времена ключевой серии должны быть пустыми.');
+  }
+
+  return {
+    key_set_results:results,
+    key_set_planned_reps:planned,
+    key_set_completed_reps:results.length
+  };
+}
+  function extraPayload(d,f){
  const base={id:d.uuid,athlete_id:d.athleteId};
  const record=(kind,payload)=>({table:'pblap_records',body:{...base,kind,payload}});
  if(d.kind==='settings')return record('settings',settingsPayload(f));
@@ -502,8 +594,34 @@ function extraPayload(d,f){
  if(d.kind==='goal-edit')return {table:'goals',update:true,body:{target_time_seconds:parseTime(f.target_time_seconds),target_date:validDate(f.target_date,false),competition:f.competition||null,status:oneOf(f.status,['active','completed'],lt('статус'))}};
  if(d.kind==='result'){const e=data.athlete_events.find(x=>x.id===f.event_id);if(!e)throw Error(lt('Добавь дистанцию в профиле.'));if(e.course==='SCY')throw Error(lt('Сохранение результатов в ярдах пока не поддерживается базой.'));if(f.source_url&&!/^https?:\/\//i.test(f.source_url))throw Error(lt('Ссылка должна начинаться с https:// или http://.'));return {table:'results',body:{...base,event:eventResultName(e),course:e.environment==='open_water'?null:e.course,time_seconds:parseTime(f.time_seconds),competition_date:validDate(f.competition_date),competition:requiredText(f.competition,lt('Название'),200),source:f.source,source_url:f.source_url||null}};}
  if(d.kind==='external')return {table:'workouts',body:{...base,coach_id:null,workout_type:'external',status:'planned',source:f.source,title:requiredText(f.title,lt('Название'),200),description:requiredText(f.description,lt('Задание'),4000),total_distance:nonnegative(f.total_distance,100000),workout_date:validDate(f.workout_date)}};
- if(d.kind==='execution'){const actual_m=f.actual_m===''?null:nonnegative(f.actual_m,100000),minutes=nonnegative(f.minutes,1440),rpe=nonnegative(f.rpe,10);if(f.completion==='skipped'&&(actual_m||minutes||rpe))throw Error(lt('Для пропущенной тренировки укажи 0 м, 0 минут и нагрузку 0.'));return record('execution',{version:2,workout_id:d.id,status:f.completion==='skipped'?'skipped':'completed',completion:f.completion,actual_m,minutes,rpe,feedback:f.feedback,source:'athlete',date:localDate()});}
- if(d.kind==='race'){const e=data.athlete_events.find(x=>x.id===f.event_id);if(!e||e.course==='SCY')throw Error(lt('Выбери дистанцию в метрах.'));const splits=String(f.splits).trim().split(/\n+/).map(line=>{const m=line.trim().match(/^(\d+)\s+(\S+)$/);if(!m)throw Error(lt('Формат строки: 50 32.40'));return {distance:integer(m[1],lt('Длина участка'),100000),seconds:parseTime(m[2])};});return record('race',raceAnalysis({event:{...e},date:validDate(f.date),source:f.source,context:f.context,splits}));}
+if(d.kind==='execution'){
+  const w=data.workouts.find(x=>x.id===d.id);
+  if(!w)throw Error('Тренировка не найдена.');
+
+  const actual_m=f.actual_m===''?null:nonnegative(f.actual_m,100000);
+  const minutes=nonnegative(f.minutes,1440);
+  const rpe=nonnegative(f.rpe,10);
+
+  if(f.completion==='skipped'&&(actual_m||minutes||rpe)){
+    throw Error(lt('Для пропущенной тренировки укажи 0 м, 0 минут и нагрузку 0.'));
+  }
+
+  const keySet=keySetReportPayload(w,f);
+
+  return record('execution',{
+    version:3,
+    workout_id:d.id,
+    status:f.completion==='skipped'?'skipped':'completed',
+    completion:f.completion,
+    actual_m,
+    minutes,
+    rpe,
+    feedback:f.feedback,
+    ...keySet,
+    source:'athlete',
+    date:localDate()
+  });
+} if(d.kind==='race'){const e=data.athlete_events.find(x=>x.id===f.event_id);if(!e||e.course==='SCY')throw Error(lt('Выбери дистанцию в метрах.'));const splits=String(f.splits).trim().split(/\n+/).map(line=>{const m=line.trim().match(/^(\d+)\s+(\S+)$/);if(!m)throw Error(lt('Формат строки: 50 32.40'));return {distance:integer(m[1],lt('Длина участка'),100000),seconds:parseTime(m[2])};});return record('race',raceAnalysis({event:{...e},date:validDate(f.date),source:f.source,context:f.context,splits}));}
  if(d.kind==='cs'){const a=data.results.find(x=>x.id===f.r200),b=data.results.find(x=>x.id===f.r400);if(!a||!b)throw Error(lt('Нужны сохранённые результаты 200 и 400 м.'));return record('cs',calculateCS(a,b,f.confirmed==='on'));}
  if(d.kind==='quality')return record('video_quality',{version:1,video_id:d.id,source:'athlete_self_check',protocol:'fixed-camera-v1',raw:{...f,fps:f.fps?integer(f.fps,lt('Частота кадров'),1000):null},available:{start15:f.visible15==='yes',walls:f.walls==='yes'},comparable_recording:f.camera==='fixed'&&f.complete==='yes'&&f.walls==='yes',ai_analysis:'not_run'});
  throw Error(lt('Неизвестная форма'));
