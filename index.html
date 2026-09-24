@@ -528,7 +528,41 @@ function calculateCS(a,b,confirmed){
  return {version:1,protocol:'CS 200+400 v1',method:'CS=(400-200)/(t400-t200)',raw:{result200:{...a},result400:{...b},stroke:x.stroke,course:a.course,comparability_confirmed_by:'athlete'},metric:{cs:200/(t400-t200),unit:'m/s'},finding:lt('Двухточечная оценка CS по выбранным данным.'),confidence:lt('Сопоставимость подтверждена пользователем; автоматические допуски не утверждены'),training_implication:lt('Аэробный ориентир вместе с раскладкой и механикой. Не LT/MLSS и не автоматическое назначение темпа.')};
 }
 function keySetReportFields(w){
- 
+  const req=w?.structured_plan?.report_requirements;
+  if(!req)return '';
+
+  const main=w?.structured_plan?.intake_session?.main;
+  const firstSet=Array.isArray(main)?main[0]:null;
+
+  const planned=Number(
+    req.key_set_planned_reps ?? firstSet?.reps
+  );
+
+  const distance=Number(
+    req.key_set_distance_m ?? firstSet?.distance_m
+  );
+
+  if(!Number.isInteger(planned)||planned<1||planned>30)return '';
+
+  if(req.record_each_rep){
+    let html='<h3>Ключевая серия · '+esc(
+      planned+'×'+(Number.isFinite(distance)?distance+' м':'')
+    )+'</h3>';
+
+    html+='<p class="mut">Запиши время каждого отрезка.</p>';
+
+    for(let i=1;i<=planned;i++){
+      html+=inputField(
+        'key_rep_'+i,
+        'Отрезок '+i,
+        'text',
+        'inputmode="decimal" maxlength="12" placeholder="Например: 31.20"'
+      );
+    }
+
+    return html;
+  }
+
   return '<h3>Ключевая серия · '+esc(
     planned+'×'+(Number.isFinite(distance)?distance+' м':'')
   )+'</h3>'+
