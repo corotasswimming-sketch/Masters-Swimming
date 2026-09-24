@@ -743,7 +743,50 @@ function athleteEntryRequested(){try{return new URL(window.location.href).search
 function entryCode(){try{const code=(new URL(window.location.href).searchParams.get('promo')||'').trim().toUpperCase();return /^[A-Z0-9_-]{3,32}$/.test(code)?code:'';}catch(_){return '';}}
 function athleteEntry(){if(athleteEntryRequested()&&user)go('plan');}
 function entryReset(){entryTrial={owner:user?.id||null,busy:false,loaded:false,result:null,error:''};if($('athleteEntrySteps'))$('athleteEntrySteps').innerHTML='';}
-async function entryTrialLoad(code=null){if(!user||!sb||entryTrial.busy)return;const owner=user.id;entryTrial.owner=owner;entryTrial.busy=true;entryTrial.error='';renderAthleteEntry();try{const r=await sb.rpc('pblap_trial_access',{p_code:code});if(r.error)throw r.error;if(user?.id!==owner)return;entryTrial.result=r.data;entryTrial.loaded=true;}catch(e){if(user?.id===owner){entryTrial.loaded=true;entryTrial.error=e.message==='PROMO_INVALID'?lt('Промокод не найден или больше не действует.'):lt('Не удалось проверить промокод. Повтори попытку.');}}finally{if(user?.id===owner){entryTrial.busy=false;renderAthleteEntry();}}}
+async function entryTrialLoad(code=null){
+  if(!user||!sb||entryTrial.busy)return;
+
+  const owner=user.id;
+  entryTrial.owner=owner;
+  entryTrial.busy=true;
+  entryTrial.error='';
+  renderAthleteEntry();
+
+  try{
+    const sessionResult=await sb.auth.getSession();
+
+    if(sessionResult.error)throw sessionResult.error;
+
+    const session=sessionResult.data?.session;
+
+    if(!session||session.user?.id!==owner){
+      throw new Error('AUTH_SESSION_NOT_READY');
+    }
+
+    let r=await sb.rpc('pblap_trial_access',{p_code:code});
+
+    if(r.error)throw r.error;
+
+    if(user?.id!==owner)return;
+
+    entryTrial.result=r.data;
+    entryTrial.loaded=true;
+
+  }catch(e){
+    if(user?.id===owner){
+      entryTrial.loaded=true;
+      entryTrial.error=
+        e.message==='PROMO_INVALID'
+          ? lt('Промокод не найден или больше не действует.')
+          : lt('Не удалось проверить промокод. Повтори попытку.');
+    }
+  }finally{
+    if(user?.id===owner){
+      entryTrial.busy=false;
+      renderAthleteEntry();
+    }
+  }
+}if(!user||!sb||entryTrial.busy)return;const owner=user.id;entryTrial.owner=owner;entryTrial.busy=true;entryTrial.error='';renderAthleteEntry();try{const r=await sb.rpc('pblap_trial_access',{p_code:code});if(r.error)throw r.error;if(user?.id!==owner)return;entryTrial.result=r.data;entryTrial.loaded=true;}catch(e){if(user?.id===owner){entryTrial.loaded=true;entryTrial.error=e.message==='PROMO_INVALID'?lt('Промокод не найден или больше не действует.'):lt('Не удалось проверить промокод. Повтори попытку.');}}finally{if(user?.id===owner){entryTrial.busy=false;renderAthleteEntry();}}}
 function renderAthleteEntry(){if(!$('athleteEntrySteps'))return;if(!user){$('athleteEntrySteps').innerHTML='';return;}if(entryTrial.owner!==user.id)entryReset();const answered=!!records('self_service_intake')[0],linked=data.telegram_users?.some(x=>x.athlete_id===athlete?.id),r=entryTrial.result;let s=lt('<h2>Начни с первого плана</h2><ol><li>Аккаунт создан.</li><li>')+(athlete?lt('Профиль спортсмена готов.'):lt('<button class="btn" type="button" data-entry="profile">Создать профиль и продолжить</button>'))+'</li><li>'+(answered?lt('Анкета сохранена. Предварительный план показан ниже.'):'<button class="btn secondary" type="button" data-entry="intake"'+(!athlete||loading?' disabled':'')+lt('>Ответить на вопросы</button>'))+'</li>';
  if(answered)s+='<li>'+(linked?lt('<a href="https://t.me/pblap_coach_bot" target="_blank" rel="noopener">Открыть мой Telegram</a>'):lt('<button class="btn" type="button" data-entry="telegram">Подключить Telegram</button>'))+lt('<p class="mut">В боте доступны назначенные тренировки и отчёты. Предварительный план появится там после назначения.</p></li>');
  s+=lt('</ol><details open><summary>Промокод и пробный месяц</summary><p>Один бесплатный месяц с активации. Без карты и автоматического продления. Доступны функции текущей тестовой версии; автономное назначение и адаптация плана ещё в разработке. Работа со своим тренером остаётся бесплатной.</p>');
