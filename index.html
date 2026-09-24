@@ -700,67 +700,7 @@ function keySetReportPayload(w,f){
     key_set_completed_reps:results.length
   };
 }
-  const req=w?.structured_plan?.report_requirements;
 
-  if(!req?.record_each_rep){
-    return {
-      key_set_results:null,
-      key_set_planned_reps:null,
-      key_set_completed_reps:null
-    };
-  }
-
-  const main=w?.structured_plan?.intake_session?.main;
-  if(!Array.isArray(main)){
-    return {
-      key_set_results:null,
-      key_set_planned_reps:null,
-      key_set_completed_reps:null
-    };
-  }
-
-  const set=main.find(x=>
-    Number(x?.distance_m)===Number(req.distance_m) &&
-    String(x?.instruction||'').toUpperCase().includes(String(req.metric||'').toUpperCase())
-  );
-
-  const planned=Number(set?.reps);
-  if(!Number.isInteger(planned)||planned<1){
-    return {
-      key_set_results:null,
-      key_set_planned_reps:null,
-      key_set_completed_reps:null
-    };
-  }
-
-  const results=[];
-
-  for(let i=1;i<=planned;i++){
-    const raw=String(f['key_rep_'+i]??'').trim();
-
-    if(raw){
-      results.push({
-        rep:i,
-        distance_m:Number(req.distance_m),
-        seconds:parseTime(raw)
-      });
-    }
-  }
-
-  if(f.completion==='full'&&results.length!==planned){
-    throw Error('Для полного выполнения запиши время каждого отрезка ключевой серии.');
-  }
-
-  if(f.completion==='skipped'&&results.length){
-    throw Error('Для пропущенной тренировки времена ключевой серии должны быть пустыми.');
-  }
-
-  return {
-    key_set_results:results,
-    key_set_planned_reps:planned,
-    key_set_completed_reps:results.length
-  };
-}
   function extraPayload(d,f){
  const base={id:d.uuid,athlete_id:d.athleteId};
  const record=(kind,payload)=>({table:'pblap_records',body:{...base,kind,payload}});
