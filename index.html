@@ -762,7 +762,13 @@ function closeExtra(){if(saving)return;extraDraft=null;$('extraEditor').close();
 $('extraCancel').addEventListener('click',closeExtra);$('extraEditor').addEventListener('cancel',e=>{e.preventDefault();closeExtra();});
 $('makeLink').addEventListener('click',makeLink);$('createAthlete').addEventListener('click',createAthlete);$('editAthlete').addEventListener('click',()=>openExtra('profile'));
 $('videoForm').addEventListener('submit',uploadVideo);
-$('registerButton').addEventListener('click',async()=>{if(!sb||saving)return;const email=$('email').value.trim(),password=$('password').value;if(!email||password.length<8){$('authError').textContent=lt('Укажи email и пароль не короче 8 символов.');return;}entryPrepareRegistration();const r=await sb.auth.signUp({email,password});$('authError').textContent=r.error?r.error.message:lt('Если адрес ещё не зарегистрирован, на него придёт письмо для подтверждения.');});
+$('registerButton').addEventListener('click',async()=>{if(!sb||saving)return;const email=$('email').value.trim(),password=$('password').value;if(!email||password.length<8){$('authError').textContent=lt('Укажи email и пароль не короче 8 символов.');return;}entryPrepareRegistration();const r=await sb.auth.signUp({
+  email,
+  password,
+  options:{
+    emailRedirectTo:'https://pb-lap.vercel.app/?start=athlete'
+  }
+});$('authError').textContent=r.error?r.error.message:lt('Если адрес ещё не зарегистрирован, на него придёт письмо для подтверждения.');});
 
 async function setPrimary(id){if(!user||!athlete||saving)return;const owner=user.id;saving=true;try{const r=await sb.rpc('pblap_set_primary',{p_event:id});if(r.error)throw r.error;if(user?.id===owner){saving=false;await loadData();}}catch(e){if(user?.id===owner)$('saveNotice').textContent=ltText(e.message);}finally{if(user?.id===owner)saving=false;}}
 
