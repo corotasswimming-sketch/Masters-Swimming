@@ -1204,7 +1204,54 @@ $('selfIntakeForm').addEventListener('submit',async e=>{e.preventDefault();const
 }
 
 const match=ssMatchPlan(a,SELF_LIBRARY);
- }catch(err){if(user?.id===d.owner){$('selfIntakeError').textContent=ltText(err.message)||lt('Сохранение не подтверждено. Повтори сохранение.');if(err.code&&err.code!=='23505')d.payload=null;}}
+
+if(['needs_answers','invalid_answers'].includes(match.status)){
+  throw Error(
+    lt('Проверь ответы: цель, объём, даты и выбранные дни должны быть заполнены корректно.')
+  );
+}
+
+d.payload={
+  id:d.id,
+  athlete_id:d.athlete_id,
+  kind:'self_service_intake',
+  payload:{
+    version:1,
+    source:'athlete',
+    answers:a,
+    match,
+    library_version:SELF_LIBRARY.version,
+    created_at:new Date().toISOString()
+  }
+};
+}
+
+saving=true;
+$('selfIntakeFields').disabled=true;
+$('selfIntakeSave').disabled=true;
+$('selfIntakeError').textContent=lt('Сохраняем…');
+
+await saveRecord('pblap_records',d.payload);
+
+const autoStart=await sb.rpc(
+  'pblap_ai_autostart_v1',
+  {p_athlete_id:d.athlete_id}
+);
+
+if(autoStart.error)throw autoStart.error;
+
+if(user?.id!==d.owner||athlete?.id!==d.athlete_id)return;
+
+$('selfIntake').close();
+selfIntakeDraft=null;
+saving=false;
+
+await loadData();
+
+if(user?.id===d.owner){
+  go('plan');
+}
+}catch(err){if(user?.id===d.owner){$('selfIntakeError').textContent=ltText(err.message)||lt('Сохранение не подтверждено. Повтори сохранение.');if(err.code&&err.code!=='23505')d.payload=null;}}
  finally{if(user?.id===d.owner){saving=false;$('selfIntakeSave').disabled=false;$('selfIntakeFields').disabled=!!selfIntakeDraft?.payload;}}});
 
 $('loginForm').addEventListener('submit',signIn);$('signOutButton').addEventListener('click',signOut);$('refreshButton').addEventListener('click',loadData);document.addEventListener('click',event=>{const button=event.target.closest('button[data-go]');if(button)go(button.dataset.go);const add=event.target.closest('button[data-add]');if(add&&!add.disabled)openEditor(add.dataset.add,add.dataset.assessment);});
