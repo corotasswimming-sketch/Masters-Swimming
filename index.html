@@ -1188,8 +1188,22 @@ function ssConditional(){const race=$('ss_goal')?.value==='race';if($('ssRace'))
 document.addEventListener('change',e=>{if(['ss_goal','ss_environment'].includes(e.target.id))ssConditional();});
 $('selfIntake').addEventListener('cancel',e=>{if(saving)e.preventDefault();});
 $('selfPlanButton').addEventListener('click',ssOpen);$('selfIntakeClose').addEventListener('click',()=>{if(!saving)$('selfIntake').close();});
-$('selfIntakeForm').addEventListener('submit',async e=>{e.preventDefault();const d=selfIntakeDraft;if(!d||saving||user?.id!==d.owner||athlete?.id!==d.athlete_id)return;try{if(!d.payload){const f=Object.fromEntries(new FormData(e.currentTarget));const a={adult:f.adult,can_swim:f.can_swim,goal:f.goal,experience:f.experience,current_sessions_week:Number(f.frequency),volume:{meters:Number(f.volume),unit:f.unit},styles:['freestyle','breaststroke','backstroke','butterfly'].filter(v=>f['style_'+v]),schedule:Array.from({length:7},(_,i)=>i+1).filter(day=>f['day_'+day]).map(day=>({day,pool_m:Number(f['pool_'+day]),minutes:Number(f['minutes_'+day])})),start_date:f.start_date,race_date:f.race_date||'unknown',gym:f.gym,restrictions:f.restrictions,notes:f.notes||''};if(f.goal==='race')a.event={environment:f.environment,stroke:f.stroke,distance_m:Number(f.distance),pool_m:f.environment==='pool'&&f.event_pool?Number(f.event_pool):null};const match=ssMatchPlan(a,SELF_LIBRARY);if(['needs_answers','invalid_answers'].includes(match.status))throw Error(lt('Проверь ответы: цель, объём, даты и выбранные дни должны быть заполнены корректно.'));d.payload={id:d.id,athlete_id:d.athlete_id,kind:'self_service_intake',payload:{version:1,source:'athlete',answers:a,match,library_version:SELF_LIBRARY.version,created_at:new Date().toISOString()}};}
- saving=true;$('selfIntakeFields').disabled=true;$('selfIntakeSave').disabled=true;$('selfIntakeError').textContent=lt('Сохраняем…');await saveRecord('pblap_records',d.payload);if(user?.id!==d.owner||athlete?.id!==d.athlete_id)return;$('selfIntake').close();selfIntakeDraft=null;saving=false;await loadData();if(user?.id===d.owner)go('plan');
+$('selfIntakeForm').addEventListener('submit',async e=>{e.preventDefault();const d=selfIntakeDraft;if(!d||saving||user?.id!==d.owner||athlete?.id!==d.athlete_id)return;try{if(!d.payload){const f=Object.fromEntries(new FormData(e.currentTarget));const a={adult:f.adult,can_swim:f.can_swim,goal:f.goal,experience:f.experience,current_sessions_week:Number(f.frequency),volume:{meters:Number(f.volume),unit:f.unit},styles:['freestyle','breaststroke','backstroke','butterfly'].filter(v=>f['style_'+v]),schedule:Array.from({length:7},(_,i)=>i+1).filter(day=>f['day_'+day]).map(day=>({day,pool_m:Number(f['pool_'+day]),minutes:Number(f['minutes_'+day])})),start_date:f.start_date,race_date:f.race_date||'unknown',gym:f.gym,restrictions:f.restrictions,notes:f.notes||''};if(f.goal==='race'){
+  a.event={
+    environment:f.environment,
+    stroke:f.stroke,
+    distance_m:Number(f.distance),
+    pool_m:f.environment==='pool'&&f.event_pool
+      ?Number(f.event_pool)
+      :null
+  };
+
+  a.current_pb_seconds=parseTime(f.current_pb);
+  a.pb_date=validDate(f.pb_date);
+  a.target_time_seconds=parseTime(f.target_time);
+}
+
+const match=ssMatchPlan(a,SELF_LIBRARY);
  }catch(err){if(user?.id===d.owner){$('selfIntakeError').textContent=ltText(err.message)||lt('Сохранение не подтверждено. Повтори сохранение.');if(err.code&&err.code!=='23505')d.payload=null;}}
  finally{if(user?.id===d.owner){saving=false;$('selfIntakeSave').disabled=false;$('selfIntakeFields').disabled=!!selfIntakeDraft?.payload;}}});
 
