@@ -38,7 +38,7 @@ input,select,textarea{width:100%;padding:13px;margin:6px 0 14px;border:1px solid
   <h1>Сегодня</h1>
   <p id="greeting" class="mut"></p>
   <div class="card"><div class="label">Текущая тренировка</div><div id="todayWorkouts"></div></div>
-  <div class="card"><h2>Твой план</h2><p class="mut">Здесь находятся текущий четырёхнедельный блок и следующие тренировки.</p><button class="btn" data-go="plan">Открыть план</button></div>
+  <div class="card"><h2>Твой план</h2><p class="mut">Здесь находятся текущий план и следующие тренировки.</p><button class="btn" data-go="plan">Открыть план</button></div>
   <div id="todayPlan" hidden></div>
   <div id="todayGoals" hidden></div>
   <div id="bestResults" hidden></div>
@@ -61,7 +61,7 @@ input,select,textarea{width:100%;padding:13px;margin:6px 0 14px;border:1px solid
 <dialog id="coachFirstPlan" class="editor"><h2>Анкета и первый план</h2><p id="cfAthlete"></p><div id="cfBody"></div><fieldset id="cfReview"><label for="cfReason">Решение тренера и что изменить</label><textarea id="cfReason" maxlength="2000" rows="4"></textarea><label><input id="cfChecked" type="checkbox" style="width:auto"> Проверил цель, стиль, ограничения, объём, длительность и рабочие темпы. Уточнения внесу в задания до публикации.</label></fieldset><p id="cfStatus" role="status"></p><button id="cfPrepare" type="button" class="btn">Открыть редактируемый план</button><button id="cfClose" type="button" class="btn secondary">Закрыть</button></dialog>
 <section id="plan" class="screen" hidden><h1>План</h1><div id="athleteEntrySteps" class="card"></div><div class="card"><h2>Анкета и подбор плана</h2><button id="selfPlanButton" type="button" class="btn">Заполнить или обновить анкету</button><div id="selfPlan"></div></div><!-- Beta Simple UI: legacy controls remain mounted for existing JavaScript. -->
 <div hidden data-beta-legacy="training"><div class="card"><h2>Исходные данные</h2><div id="preparation"></div></div><div class="card"><h2>Твоя тренировка</h2><p class="mut">Базовый шаблон занятия. Автоматическая периодизация сезона ещё не рассчитывается.</p><form id="trainingForm"><div class="grid"><div><label for="trainingPool">Бассейн</label><select id="trainingPool"><option value="25">25 м · SCM</option><option value="50">50 м · LCM</option></select></div><div><label for="trainingMinutes">Время</label><select id="trainingMinutes"><option value="30">30 минут</option><option value="45" selected>45 минут</option><option value="60">60 минут</option></select></div></div><details><summary>Изменить тип тренировки</summary><label for="trainingTheme">Задача занятия</label><select id="trainingTheme"><option value="technique">Техника и ровное плавание</option><option value="easy">Лёгкая аэробная работа</option><option value="rhythm">Ритм основной дистанции</option></select></details><button id="buildTraining" class="btn" type="submit" disabled>Составить тренировку</button><p id="trainingError" class="error" role="alert"></p></form><p id="trainingEmpty" class="mut"></p></div><div id="trainingOutput" class="card" aria-live="polite"></div><button id="saveTraining" class="btn" hidden>Сохранить тренировку</button><p id="trainingNotice" class="mut" role="status"></p></div>
-<div class="card"><h2>Текущий план на 4 недели</h2><div id="activePlan"></div></div>
+<div class="card"><h2>Текущий план</h2><div id="activePlan"></div></div>
 <div class="card"><h2>Мои тренировки</h2><div id="planWorkouts"></div><div hidden data-beta-legacy="external"><button class="btn secondary" data-extra="external">Добавить тренировку тренера / свою</button><p class="mut">Все прошлые и будущие занятия — по дням, неделям и месяцам.</p><button class="btn" data-go="calendar">Открыть календарь тренировок</button></div></div>
 <div class="card" hidden data-beta-legacy="preparation"><h2>Подготовка</h2><div id="planList"></div></div><div class="card" hidden data-beta-legacy="goals"><h2>Цели спортсмена</h2><div id="goalList"></div><button class="btn secondary" data-add="goal" disabled>Добавить цель</button></div></section>
 <section id="analysis" class="screen" hidden><h1>Анализ</h1><div class="card"><h2>Отчёты по видео</h2><div id="videoReviews"></div></div><div class="card"><h2>Твоя дистанция</h2><div id="eventModel"></div></div><div class="card"><h2>Раскладка заплыва · Basic</h2><button class="btn" data-extra="race">Добавить сплиты</button><div id="raceList"></div></div><div class="card"><h2>Critical Speed · 200 + 400 м</h2><p>Сначала используем имеющиеся результаты. Видео и новый тест для самого расчёта не нужны.</p><button class="btn" data-extra="cs">Выбрать результаты и рассчитать</button><div id="calculationList"></div></div><p class="mut">Данные тестов и оценки результативности.</p><div class="card"><h2>Тестирование</h2><div id="assessmentList"></div><button class="btn secondary" data-add="assessment" disabled>Добавить тестирование</button></div><div class="card"><h2>Видео заплыва</h2><p>Снимай неподвижной камерой сбоку или по диагонали. В кадре должны быть видны спортсмен, стены и нужные контрольные отметки. Желательно 60 кадров/с. Невидимые отметки не измеряются.</p><p class="mut">Отдельное личное хранилище оригиналов до 100 МБ. Первые разборы проводим вручную; платный автоматический анализ пока не включён.</p><form id="videoForm"><label for="videoTitle">Название</label><input id="videoTitle" required maxlength="200"><label for="videoEvent">Дистанция и бассейн</label><input id="videoEvent" required maxlength="200" placeholder="50 м брасс · LCM"><label for="videoFile">MP4 / MOV / WebM, до 100 МБ</label><input id="videoFile" type="file" accept="video/mp4,video/quicktime,video/webm" required><button id="uploadVideo" class="btn">Загрузить видео</button></form><p id="videoStatus" role="status"></p><div id="videoPlayer"></div><div id="videosList"></div></div><div class="card"><h2>Профиль результативности</h2><p class="mut">Сохранённые показатели. Оценки не рассчитываются автоматически.</p><div id="metricList"></div><button class="btn secondary" data-add="metric" disabled>Добавить показатель</button></div><div class="card"><h2>Диапазоны тренера</h2><p class="mut">Ранее внесённые Z1–Z7 сохранены как ручные данные. Они не являются утверждённым ядром интенсивности PB LAP.</p><div id="zoneList"></div><button class="btn secondary" data-add="zone" disabled>Добавить зону</button></div></section>
@@ -324,8 +324,16 @@ function renderTraining(){
  $('buildTraining').disabled=!ready||!!(trainingPayload&&!trainingSavedId);
  $('saveTraining').hidden=!trainingDraft; $('saveTraining').disabled=!ready||!!trainingSavedId; $('saveTraining').textContent=trainingSavedId?lt('Сохранено'):trainingPayload?lt('Повторить сохранение'):lt('Сохранить тренировку');
  renderAthleteCalendar();
- $('todayWorkouts').innerHTML=savedWorkoutsMarkup(data.workouts.filter(w=>w.workout_date===localDate()));
- $('planWorkouts').innerHTML=savedWorkoutsMarkup();
+ const todayDate=localDate();
+ const todaySessions=data.workouts.filter(w=>w.workout_date===todayDate);
+ const upcoming=data.workouts.filter(w=>w.workout_date>todayDate&&w.status==='planned').sort((a,b)=>a.workout_date.localeCompare(b.workout_date));
+ const nearest=todaySessions.length?todaySessions:upcoming.filter(w=>w.workout_date===upcoming[0]?.workout_date);
+ $('todayWorkouts').innerHTML=savedWorkoutsMarkup(nearest);
+ const next=data.workouts.filter(w=>w.workout_date>=todayDate);
+ const undated=data.workouts.filter(w=>!w.workout_date);
+ const past=data.workouts.filter(w=>w.workout_date&&w.workout_date<todayDate);
+ const workoutsState=state('workouts',lt('Сохранённых тренировок пока нет.'));
+ $('planWorkouts').innerHTML=workoutsState||savedWorkoutsMarkup(next,true)+(undated.length?'<details><summary>Без даты</summary>'+savedWorkoutsMarkup(undated)+'</details>':'')+(past.length?'<details><summary>Прошлые тренировки ('+past.length+')</summary>'+savedWorkoutsMarkup(past)+'</details>':'');
  $('trainingEmpty').textContent=!athlete?lt('Тренировка станет доступна после загрузки профиля спортсмена.'):lt('Выбери бассейн и время. Основной стиль возьмём из профиля.');
  if(trainingOwner!==athlete?.id){trainingDraft=null;trainingPayload=null;trainingSavedId=null;trainingOwner=athlete?.id;$('trainingOutput').innerHTML='';$('trainingNotice').textContent='';}
  $('trainingOutput').hidden=!trainingDraft;
@@ -403,11 +411,12 @@ function workoutPlanLabel(w){
 
   return '';
 }
-  function savedWorkoutsMarkup(rows=data.workouts){
+  function savedWorkoutsMarkup(rows=data.workouts,ascending=false){
  const status=state('workouts',lt('Сохранённых тренировок пока нет.'));
  if(status)return status;
- if(!rows.length)return empty(lt('На сегодня ещё нет сохранённых тренировок.'));
- return newest(rows,'workout_date').map(w=>'<article class="item"><span class="badge">'+esc(tr(w.status))+'</span><h3>'+esc(w.title)+'</h3><p class="mut">'+esc(date(w.workout_date))+' · '+esc(workoutPlanLabel(w))+lt('</p><details><summary>Открыть тренировку</summary><p style="white-space:pre-wrap">')+esc(w.description||lt('Описание не задано.'))+'</p></details>'+workoutAnalysisMarkup(w)+executionMarkup(w)+(['planned','completed','skipped'].includes(w.status)?'<button class="btn secondary" data-complete-workout="'+esc(w.id)+'" '+(saving?'disabled':'')+lt('>Записать выполнение</button>'):'')+'</article>').join('');
+ if(!rows.length)return empty(lt('Предстоящих тренировок пока нет.'));
+ const ordered=newest(rows,'workout_date');if(ascending)ordered.reverse();
+ return ordered.map(w=>'<article class="item"><span class="badge">'+esc(tr(w.status))+'</span><h3>'+esc(w.title)+'</h3><p class="mut">'+esc(date(w.workout_date))+' · '+esc(workoutPlanLabel(w))+lt('</p><details><summary>Открыть тренировку</summary><p style="white-space:pre-wrap">')+esc(w.description||lt('Описание не задано.'))+'</p></details>'+workoutAnalysisMarkup(w)+executionMarkup(w)+(['planned','completed','skipped'].includes(w.status)?'<button class="btn secondary" data-complete-workout="'+esc(w.id)+'" '+(saving?'disabled':'')+lt('>Записать выполнение</button>'):'')+'</article>').join('');
 }
 async function saveTraining(){
  if(!trainingDraft||!user||!athlete||saving||trainingSavedId)return;
