@@ -30,7 +30,7 @@ input,select,textarea{width:100%;padding:13px;margin:6px 0 14px;border:1px solid
 <header class="top"><div><div class="logo">PB <span>LAP</span></div><div class="version">ЛИЧНЫЙ ПРОГРЕСС · V1.19 TEST</div></div><div id="avatar" class="avatar" aria-hidden="true">PB</div></header>
 <p id="bootStatus" class="mut" role="status">Проверяем вход…</p>
 <noscript><p class="error">Для работы PB LAP включите JavaScript в браузере.</p></noscript>
-<section id="login" hidden><div class="card"><label for="loginLanguage">Язык интерфейса</label><select id="loginLanguage" data-language-choice translate="no" aria-label="Language / Limbă / Язык"><option value="ru">Русский</option><option value="ro">Română</option><option value="en">English</option></select><p class="mut">Язык сохраняется в аккаунте. Тренировки и комментарии остаются на языке оригинала.</p><p data-language-status role="status"></p></div><div class="card"><h1>Твой первый план с PB LAP</h1><p>Создай аккаунт или войди. Затем ответь на вопросы и посмотри предварительную программу на четыре недели.</p><p><a href="/start.html">Как это работает</a></p><p class="mut">Если потребуется подтверждение email, открой письмо и затем вернись сюда. Промокод активируется отдельно после входа. Уже есть аккаунт? Используй его.</p></div><p><a href="/coaches.html">PB LAP для тренеров — бесплатно</a></p><div id="coachEntryHint" class="card" hidden><h2>Начни с аккаунта</h2><p>Укажи email и пароль и нажми «Создать аккаунт». Если аккаунт уже есть — «Войти». После входа откроется раздел тренера.</p></div><h1>С возвращением</h1><p class="mut">Войдите в свой профиль спортсмена.</p><form id="loginForm" class="card"><label for="email">Email</label><input id="email" type="email" autocomplete="username" placeholder="you@example.com" required><label for="password">Пароль</label><input id="password" type="password" autocomplete="current-password" required><button id="registerButton" class="btn secondary" type="button">Создать аккаунт</button><button id="signInButton" class="btn" type="submit">Войти</button><p id="authError" class="error" role="alert"></p></form></section>
+<section id="login" hidden><div class="card"><label for="loginLanguage">Язык интерфейса</label><select id="loginLanguage" data-language-choice translate="no" aria-label="Language / Limbă / Язык"><option value="ru">Русский</option><option value="ro">Română</option><option value="en">English</option></select><p class="mut">Язык сохраняется в аккаунте. Тренировки и комментарии остаются на языке оригинала.</p><p data-language-status role="status"></p></div><div class="card"><h1>Твой первый план с PB LAP</h1><p>Создай аккаунт или войди. Затем ответь на вопросы и посмотри предварительную программу на четыре недели.</p><p><a href="/start.html">Как это работает</a></p><p class="mut">Если потребуется подтверждение email, открой письмо и затем вернись сюда. Промокод активируется отдельно после входа. Уже есть аккаунт? Используй его.</p></div><p><a href="/coaches.html">PB LAP для тренеров — бесплатно</a></p><div id="coachEntryHint" class="card" hidden><h2>Начни с аккаунта</h2><p>Укажи email и пароль и нажми «Создать аккаунт». Если аккаунт уже есть — «Войти». После входа откроется раздел тренера.</p></div><h1>Вход и регистрация</h1><p class="mut">Впервые здесь? Создай аккаунт. Уже зарегистрирован? Нажми «Войти».</p><form id="loginForm" class="card"><label for="email">Email</label><input id="email" type="email" autocomplete="username" placeholder="you@example.com" required><label for="password">Пароль</label><input id="password" type="password" autocomplete="current-password" required><button id="registerButton" class="btn" type="button">Создать аккаунт</button><button id="signInButton" class="btn secondary" type="submit">Войти</button><button id="resendConfirmation" class="btn secondary" type="button">Отправить письмо подтверждения повторно</button><p class="mut">После регистрации проверь «Входящие» и «Спам». Открывай самое последнее письмо. Новое письмо можно запросить через минуту.</p><p id="authError" class="error" role="alert"></p></form></section>
 <main id="app" hidden>
 <p id="saveNotice" class="success" role="status" aria-live="polite"></p>
 <div class="intro actions"><button id="refreshButton" class="btn secondary" type="button">Обновить данные</button></div><p id="loadStatus" class="mut" role="status" aria-live="polite"></p><p id="loadError" class="error" role="alert"></p>
@@ -222,7 +222,7 @@ async function loadData(){if(!sb||!user||saving)return;loading=true;const token=
  }catch(e){if(token===generation)$('loadError').textContent=lt('Не удалось загрузить данные. ')+(e?.message||lt('Попробуйте ещё раз.'));}
  finally{if(token===generation){loading=false;$('refreshButton').disabled=false;render();void reviewLoad();void manualVideoLoad();}}
 }
-async function signIn(event){event.preventDefault();if(!sb)return;$('authError').textContent='';$('signInButton').disabled=true;try{const r=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(r.error)throw r.error;if(r.data.user&&user?.id!==r.data.user.id)showSession(r.data.user);}catch(e){$('authError').textContent=e?.message==='Invalid login credentials'?lt('Неверный email или пароль.'):(e?.message||lt('Не удалось войти. Проверьте соединение.'));}finally{$('signInButton').disabled=false;}}
+async function signIn(event){event.preventDefault();if(!sb||authRequestBusy)return;authRequestBusy=true;authEmailControls();$('authError').textContent='';$('signInButton').disabled=true;try{const r=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(r.error)throw r.error;if(r.data.user&&user?.id!==r.data.user.id)showSession(r.data.user);}catch(e){$('authError').textContent=e?.message==='Invalid login credentials'?lt('Неверный email или пароль.'):authFriendlyError(e);}finally{authRequestBusy=false;authRequestMode='';authEmailControls();}}
 async function signOut(){$('signOutButton').disabled=true;$('signOutError').textContent='';try{const r=await sb.auth.signOut();if(r.error)throw r.error;showSession(null);}catch(e){$('signOutError').textContent=lt('Не удалось выйти. ')+(e?.message||lt('Попробуйте ещё раз.'));}finally{$('signOutButton').disabled=false;}}
 // Each form writes one row. Test attempts are saved separately from the assessment.
 // Reusing the draft UUID makes retrying an uncertain network response idempotent.
@@ -822,13 +822,47 @@ function closeExtra(){if(saving)return;extraDraft=null;$('extraEditor').close();
 $('extraCancel').addEventListener('click',closeExtra);$('extraEditor').addEventListener('cancel',e=>{e.preventDefault();closeExtra();});
 $('makeLink').addEventListener('click',makeLink);$('createAthlete').addEventListener('click',createAthlete);$('editAthlete').addEventListener('click',()=>openExtra('profile'));
 $('videoForm').addEventListener('submit',uploadVideo);
-$('registerButton').addEventListener('click',async()=>{if(!sb||saving)return;const email=$('email').value.trim(),password=$('password').value;if(!email||password.length<8){$('authError').textContent=lt('Укажи email и пароль не короче 8 символов.');return;}entryPrepareRegistration();const r=await sb.auth.signUp({
-  email,
-  password,
-  options:{
-    emailRedirectTo:'https://pb-lap.vercel.app/?start=athlete'
-  }
-});$('authError').textContent=r.error?r.error.message:lt('Если адрес ещё не зарегистрирован, на него придёт письмо для подтверждения.');});
+let authRequestBusy=false, authRequestMode='', authEmailTimer=null;
+const authEmailCooldown=new Map();
+function authEmailKey(){return $('email').value.trim().toLowerCase();}
+function authEmailControls(){
+ clearTimeout(authEmailTimer);
+ const remaining=Math.max(0,Math.ceil(((authEmailCooldown.get(authEmailKey())||0)-Date.now())/1000));
+ $('registerButton').disabled=authRequestBusy||remaining>0;
+ $('resendConfirmation').disabled=authRequestBusy||remaining>0;
+ $('signInButton').disabled=authRequestBusy;
+ $('registerButton').textContent=authRequestBusy&&authRequestMode==='signup'?lt('Создаём аккаунт…'):remaining?lt('Проверь почту · ')+remaining+lt(' с'):lt('Создать аккаунт');
+ $('resendConfirmation').textContent=remaining?lt('Повторное письмо через ')+remaining+lt(' с'):lt('Отправить письмо подтверждения повторно');
+ if(remaining)authEmailTimer=setTimeout(authEmailControls,1000);
+}
+function authFriendlyError(e){
+ const message=e?.message||'';
+ if(e?.code==='email_not_confirmed'||/email not confirmed/i.test(message))return lt('Подтверди email по письму. Если письма нет или ссылка устарела, запроси новое ниже.');
+ if(e?.code==='otp_expired'||/expired|invalid.*link|token.*not found/i.test(message))return lt('Ссылка подтверждения устарела или уже использована. Попробуй войти. Если email ещё не подтверждён, введи его и запроси новое письмо.');
+ if(e?.status===429)return lt('Слишком много запросов. Подожди минуту перед повторной отправкой. Если ограничение остаётся, попробуй позже.');
+ if(e?.status>=500)return lt('Сервис регистрации временно не смог обработать запрос. Если ты уже регистрировался, попробуй войти или запроси письмо подтверждения повторно.');
+ return message||lt('Не удалось связаться с сервером. Проверь интернет и попробуй снова.');
+}
+async function requestConfirmation(mode){
+ if(!sb||saving||authRequestBusy)return;
+ const email=authEmailKey(),password=$('password').value;
+ if(!email||!$('email').checkValidity()){$('authError').textContent=lt('Укажи корректный email.');return;}
+ if(mode==='signup'&&password.length<8){$('authError').textContent=lt('Укажи email и пароль не короче 8 символов.');return;}
+ if((authEmailCooldown.get(email)||0)>Date.now()){authEmailControls();return;}
+ authRequestBusy=true;authRequestMode=mode;authEmailControls();$('authError').textContent=lt('Отправляем запрос…');entryPrepareRegistration();
+ try{
+  const options={emailRedirectTo:'https://pb-lap.vercel.app/?start=athlete'};
+  const r=mode==='signup'?await sb.auth.signUp({email,password,options}):await sb.auth.resend({type:'signup',email,options});
+  if(r.error)throw r.error;
+  authEmailCooldown.set(email,Date.now()+60000);
+  $('authError').textContent=lt('Запрос принят. Проверь почту и папку «Спам». Открой самое последнее письмо подтверждения. Если аккаунт уже подтверждён, нажми «Войти».');
+ }catch(e){if(e?.status===429)authEmailCooldown.set(email,Date.now()+60000);$('authError').textContent=authFriendlyError(e);}
+ finally{authRequestBusy=false;authRequestMode='';authEmailControls();}
+}
+$('registerButton').addEventListener('click',()=>requestConfirmation('signup'));
+$('resendConfirmation').addEventListener('click',()=>requestConfirmation('resend'));
+$('email').addEventListener('input',authEmailControls);
+
 
 async function setPrimary(id){if(!user||!athlete||saving)return;const owner=user.id;saving=true;try{const r=await sb.rpc('pblap_set_primary',{p_event:id});if(r.error)throw r.error;if(user?.id===owner){saving=false;await loadData();}}catch(e){if(user?.id===owner)$('saveNotice').textContent=ltText(e.message);}finally{if(user?.id===owner)saving=false;}}
 
@@ -1425,7 +1459,7 @@ $('videoLinkForm').addEventListener('submit',submitVideoLink);
 $('videoSendMethod').addEventListener('change',()=>{const file=$('videoSendMethod').value==='file';$('videoDriveCard').hidden=file;$('videoFileCard').hidden=!file;});
 
 
-(async()=>{try{if(!window.supabase)throw new Error(lt('Не удалось загрузить библиотеку входа. Проверьте интернет и перезагрузите страницу.'));sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);let authChanged=false, authRevision=0;sb.auth.onAuthStateChange((event,session)=>{if(event==='INITIAL_SESSION')return;authChanged=true;const revision=++authRevision;if(event==='SIGNED_OUT'){showSession(null);return;}if(session?.user&&session.user.id!==user?.id)setTimeout(()=>{if(revision===authRevision&&sb&&(!user||user.id!==session.user.id))showSession(session.user);},0);});const r=await sb.auth.getSession();if(r.error)throw r.error;if(!authChanged)showSession(r.data.session?.user||null);}catch(e){$('bootStatus').hidden=true;$('login').hidden=false;$('authError').textContent=e?.message||lt('Не удалось проверить вход.');if(!sb)$('signInButton').disabled=true;}})();
+(async()=>{try{if(!window.supabase)throw new Error(lt('Не удалось загрузить библиотеку входа. Проверьте интернет и перезагрузите страницу.'));sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);let authChanged=false, authRevision=0;sb.auth.onAuthStateChange((event,session)=>{if(event==='INITIAL_SESSION')return;authChanged=true;const revision=++authRevision;if(event==='SIGNED_OUT'){showSession(null);return;}if(session?.user&&session.user.id!==user?.id)setTimeout(()=>{if(revision===authRevision&&sb&&(!user||user.id!==session.user.id))showSession(session.user);},0);});const r=await sb.auth.getSession();if(r.error)throw r.error;if(!authChanged)showSession(r.data.session?.user||null);}catch(e){$('bootStatus').hidden=true;$('login').hidden=false;$('authError').textContent=authFriendlyError(e);if(!sb)$('signInButton').disabled=true;}})();
 </script>
 </body>
 </html>
