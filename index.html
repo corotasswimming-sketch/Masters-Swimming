@@ -31,6 +31,19 @@ input,select,textarea{width:100%;padding:13px;margin:6px 0 14px;border:1px solid
 <p id="bootStatus" class="mut" role="status">Проверяем вход…</p>
 <noscript><p class="error">Для работы PB LAP включите JavaScript в браузере.</p></noscript>
 <section id="login" hidden><div class="card"><label for="loginLanguage">Язык интерфейса</label><select id="loginLanguage" data-language-choice translate="no" aria-label="Language / Limbă / Язык"><option value="ru">Русский</option><option value="ro">Română</option><option value="en">English</option></select><p class="mut">Язык сохраняется в аккаунте. Тренировки и комментарии остаются на языке оригинала.</p><p data-language-status role="status"></p></div><div class="card"><h1>Твой первый план с PB LAP</h1><p>Создай аккаунт или войди. Затем ответь на вопросы и посмотри предварительную программу на четыре недели.</p><p><a href="/start.html">Как это работает</a></p><p class="mut">Если потребуется подтверждение email, открой письмо и затем вернись сюда. Промокод активируется отдельно после входа. Уже есть аккаунт? Используй его.</p></div><p><a href="/coaches.html">PB LAP для тренеров — бесплатно</a></p><div id="coachEntryHint" class="card" hidden><h2>Начни с аккаунта</h2><p>Укажи email и пароль и нажми «Создать аккаунт». Если аккаунт уже есть — «Войти». После входа откроется раздел тренера.</p></div><h1>Вход и регистрация</h1><p class="mut">Впервые здесь? Создай аккаунт. Уже зарегистрирован? Нажми «Войти».</p><form id="loginForm" class="card"><label for="email">Email</label><input id="email" type="email" autocomplete="username" placeholder="you@example.com" required><label for="password">Пароль</label><input id="password" type="password" autocomplete="current-password" required><button id="registerButton" class="btn" type="button">Создать аккаунт</button><button id="signInButton" class="btn secondary" type="submit">Войти</button><button id="resendConfirmation" class="btn secondary" type="button">Отправить письмо подтверждения повторно</button><p class="mut">После регистрации проверь «Входящие» и «Спам». Открывай самое последнее письмо. Новое письмо можно запросить через минуту.</p><p id="authError" class="error" role="alert"></p></form></section>
+<section id="onboarding" hidden aria-labelledby="onboardingHeading">
+<h1 id="onboardingHeading">Настроим PB LAP</h1>
+<div class="card"><ol id="onboardingSteps"></ol><p id="onboardingStatus" role="status" aria-live="polite"></p><p id="onboardingError" class="error" role="alert"></p>
+<button id="onboardingProfile" class="btn" type="button" hidden>Создать профиль и продолжить</button>
+<button id="onboardingIntake" class="btn" type="button" hidden>Заполнить / изменить анкету</button>
+<button id="onboardingPlan" class="btn" type="button" hidden>Повторить создание плана</button>
+<button id="onboardingTelegram" class="btn" type="button" hidden>Подключить Telegram</button>
+<div id="onboardingTelegramOutput" hidden></div>
+<button id="onboardingStart" class="btn" type="button" hidden>Начать</button>
+<button id="onboardingRefresh" class="btn secondary" type="button">Проверить ещё раз</button>
+<button id="onboardingSignOut" class="btn secondary" type="button">Выйти</button>
+</div></section>
+<dialog id="selfIntake" class="editor"><form id="selfIntakeForm"><h2>Анкета первого плана</h2><p class="mut">Ответы сохраняются в твоём аккаунте. Связанный с тобой тренер сможет проверить анкету и подготовить назначения. Известные данные можно изменить.</p><fieldset id="selfIntakeFields"></fieldset><p id="selfIntakeError" class="error" role="alert"></p><button id="selfIntakeSave" class="btn" type="submit">Сохранить анкету и подобрать</button><button id="selfIntakeClose" class="btn secondary" type="button">Закрыть</button></form></dialog>
 <main id="app" hidden>
 <p id="saveNotice" class="success" role="status" aria-live="polite"></p>
 <div class="intro actions"><button id="refreshButton" class="btn secondary" type="button">Обновить данные</button></div><p id="loadStatus" class="mut" role="status" aria-live="polite"></p><p id="loadError" class="error" role="alert"></p>
@@ -57,7 +70,7 @@ input,select,textarea{width:100%;padding:13px;margin:6px 0 14px;border:1px solid
 </div></section>
 <dialog id="trainingAssistant" class="editor"><h2>Помощник тренера · разбор недели</h2><p id="taName"></p><p class="mut">Первая версия собирает факты и вопросы по сохранённым заданиям и отчётам. Решение принимает тренер.</p><div id="taBody"></div><p id="taStatus" role="status"></p><button id="taToReview" class="btn" type="button">Открыть черновик решения тренера</button><button id="taClose" class="btn secondary" type="button">Закрыть</button></dialog>
 <dialog id="coachLibrary" class="editor"><h2>Библиотека программ</h2><p id="clAthlete"></p><p class="mut">Твои исходные программы. Применимость к выбранному спортсмену определяет тренер.</p><p id="clStatus" role="status"></p><label for="clProgram">Этап подготовки</label><select id="clProgram"></select><div id="clSource"></div><div id="clTemplates"></div><label for="clPurpose">Почему этот блок подходит спортсмену сейчас</label><textarea id="clPurpose" rows="3" maxlength="1000" placeholder="Цель периода, дистанция и условия применения"></textarea><label><input id="clFit" type="checkbox"> Проверил стиль, уровень спортсмена, бассейн, расписание и доступное оборудование.</label><label><input id="clLoad" type="checkbox"> Проверил нагрузку воды и зала. Варианты первой недели, сокращения и неясные задания уточню в черновике до публикации.</label><button id="clPrepare" class="btn" type="button">Подготовить черновик периода</button><button id="clClose" class="btn secondary" type="button">Закрыть</button></dialog>
-<dialog id="selfIntake" class="editor"><form id="selfIntakeForm"><h2>Анкета первого плана</h2><p class="mut">Ответы сохраняются в твоём аккаунте. Связанный с тобой тренер сможет проверить анкету и подготовить назначения. Известные данные можно изменить.</p><fieldset id="selfIntakeFields"></fieldset><p id="selfIntakeError" class="error" role="alert"></p><button id="selfIntakeSave" class="btn" type="submit">Сохранить анкету и подобрать</button><button id="selfIntakeClose" class="btn secondary" type="button">Закрыть</button></form></dialog>
+
 <dialog id="coachFirstPlan" class="editor"><h2>Анкета и первый план</h2><p id="cfAthlete"></p><div id="cfBody"></div><fieldset id="cfReview"><label for="cfReason">Решение тренера и что изменить</label><textarea id="cfReason" maxlength="2000" rows="4"></textarea><label><input id="cfChecked" type="checkbox" style="width:auto"> Проверил цель, стиль, ограничения, объём, длительность и рабочие темпы. Уточнения внесу в задания до публикации.</label></fieldset><p id="cfStatus" role="status"></p><button id="cfPrepare" type="button" class="btn">Открыть редактируемый план</button><button id="cfClose" type="button" class="btn secondary">Закрыть</button></dialog>
 <section id="plan" class="screen" hidden><h1>План</h1><div id="athleteEntrySteps" class="card"></div><div id="planOnboarding" class="card"><h2>Анкета и подбор плана</h2><button id="selfPlanButton" type="button" class="btn">Заполнить или обновить анкету</button><div id="selfPlan"></div></div><div id="planOnboardingReview"><div id="reviewMine" aria-live="polite"></div></div><!-- Beta Simple UI: legacy controls remain mounted for existing JavaScript. -->
 <div hidden data-beta-legacy="training"><div class="card"><h2>Исходные данные</h2><div id="preparation"></div></div><div class="card"><h2>Твоя тренировка</h2><p class="mut">Базовый шаблон занятия. Автоматическая периодизация сезона ещё не рассчитывается.</p><form id="trainingForm"><div class="grid"><div><label for="trainingPool">Бассейн</label><select id="trainingPool"><option value="25">25 м · SCM</option><option value="50">50 м · LCM</option></select></div><div><label for="trainingMinutes">Время</label><select id="trainingMinutes"><option value="30">30 минут</option><option value="45" selected>45 минут</option><option value="60">60 минут</option></select></div></div><details><summary>Изменить тип тренировки</summary><label for="trainingTheme">Задача занятия</label><select id="trainingTheme"><option value="technique">Техника и ровное плавание</option><option value="easy">Лёгкая аэробная работа</option><option value="rhythm">Ритм основной дистанции</option></select></details><button id="buildTraining" class="btn" type="submit" disabled>Составить тренировку</button><p id="trainingError" class="error" role="alert"></p></form><p id="trainingEmpty" class="mut"></p></div><div id="trainingOutput" class="card" aria-live="polite"></div><button id="saveTraining" class="btn" hidden>Сохранить тренировку</button><p id="trainingNotice" class="mut" role="status"></p></div>
@@ -195,8 +208,8 @@ function attemptHTML(a){
  const content=errors.test_attempts?'<p class="error">'+esc(errors.test_attempts)+'</p>':(rows.length?rows.map(x=>'<p><b>'+esc(fmt(x.time_seconds))+'</b> · '+esc(x.distance_m)+' '+(a.course==='SCY'?lt('ярд'):lt('м'))+' · '+esc(x.test_type)+lt(' · попытка ')+esc(x.attempt_number)+'</p>').join(''):empty(lt('Попытки пока не записаны.')));
  return '<div class="attempts">'+content+'</div><button class="btn secondary small-btn" data-add="attempt" data-assessment="'+esc(a.id)+lt('">Записать попытку</button>');
 }
-function go(id){if(!['today','plan','analysis','progress','profile','coach','calendar','video'].includes(id))return;document.querySelectorAll('.screen').forEach(el=>el.hidden=el.id!==id);document.querySelectorAll('.nav button').forEach(el=>{if(el.dataset.go===id)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');});window.scrollTo(0,0);}
-function showSession(next){generation++;closeEditor(true);$('saveNotice').textContent='';user=next;coachReset();if(languageSession(next))return;resetData();render();$('bootStatus').hidden=true;$('login').hidden=!!user;$('app').hidden=!user;$('nav').hidden=!user;$('loadError').textContent='';$('loadStatus').textContent='';$('signOutError').textContent='';$('refreshButton').disabled=false;$('password').value='';go('today');loading=false;if(user)loadData();coachEntry();athleteEntry();manualVideoEntry();}
+function go(id){if(onboardingLocked())return;if(!['today','plan','analysis','progress','profile','coach','calendar','video'].includes(id))return;document.querySelectorAll('.screen').forEach(el=>el.hidden=el.id!==id);document.querySelectorAll('.nav button').forEach(el=>{if(el.dataset.go===id)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');});window.scrollTo(0,0);}
+function showSession(next){generation++;closeEditor(true);$('saveNotice').textContent='';user=next;onboardingReset();coachReset();if(languageSession(next))return;resetData();render();$('bootStatus').hidden=true;$('login').hidden=!!user;onboardingRender();$('loadError').textContent='';$('loadStatus').textContent='';$('signOutError').textContent='';$('refreshButton').disabled=false;$('password').value='';go('today');loading=false;if(user)loadData();coachEntry();athleteEntry();manualVideoEntry();}
 function tableError(table,e){return lt('Не удалось загрузить ')+table+'. '+(e?.message||lt('Проверьте соединение и попробуйте обновить данные.'));}
 async function readRows(table,athleteId){const rows=[];for(let from=0;;from+=500){const r=await sb.from(table).select('*').eq('athlete_id',athleteId).order('id',{ascending:true}).range(from,from+499);if(r.error)throw r.error;rows.push(...(r.data||[]));if((r.data||[]).length<500)return rows;}}
 async function loadData(){if(!sb||!user||saving)return;loading=true;const token=++generation;const userId=user.id;resetData();render();$('refreshButton').disabled=true;$('loadStatus').textContent=lt('Загружаем данные…');$('loadError').textContent='';
@@ -220,7 +233,7 @@ async function loadData(){if(!sb||!user||saving)return;loading=true;const token=
    if(athlete){const adaptationResult=await sb.rpc('pblap_athlete_adaptation_status');if(token===generation){if(adaptationResult.error)errors.adaptation_status='Не удалось загрузить решения PB.';else data.adaptation_status=adaptationResult.data||[];}}
    if(token!==generation)return;render();const hasErrors=Object.keys(errors).length||profileIssue||athleteIssue;$('loadStatus').textContent=hasErrors?lt('Данные загружены не полностью. Подробности — в соответствующих разделах.'):lt('Обновлено в ')+new Date().toLocaleTimeString(languageLocale(),{hour:'2-digit',minute:'2-digit'});
  }catch(e){if(token===generation)$('loadError').textContent=lt('Не удалось загрузить данные. ')+(e?.message||lt('Попробуйте ещё раз.'));}
- finally{if(token===generation){loading=false;$('refreshButton').disabled=false;render();void reviewLoad();void manualVideoLoad();}}
+ finally{if(token===generation){loading=false;$('refreshButton').disabled=false;render();void reviewLoad();void manualVideoLoad();await onboardingRefresh();}}
 }
 async function signIn(event){event.preventDefault();if(!sb||authRequestBusy)return;authRequestBusy=true;authEmailControls();$('authError').textContent='';$('signInButton').disabled=true;try{const r=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(r.error)throw r.error;if(r.data.user&&user?.id!==r.data.user.id)showSession(r.data.user);}catch(e){$('authError').textContent=e?.message==='Invalid login credentials'?lt('Неверный email или пароль.'):authFriendlyError(e);}finally{authRequestBusy=false;authRequestMode='';authEmailControls();}}
 async function signOut(){$('signOutButton').disabled=true;$('signOutError').textContent='';try{const r=await sb.auth.signOut();if(r.error)throw r.error;showSession(null);}catch(e){$('signOutError').textContent=lt('Не удалось выйти. ')+(e?.message||lt('Попробуйте ещё раз.'));}finally{$('signOutButton').disabled=false;}}
@@ -1357,6 +1370,8 @@ $('selfIntakeSave').disabled=true;
 $('selfIntakeError').textContent=lt('Сохраняем…');
 
 await saveRecord('pblap_records',d.payload);
+if(user?.id!==d.owner||athlete?.id!==d.athlete_id)return;
+if(onboardingLocked()){onboarding.attempted=true;onboarding.message=lt('Создаём и публикуем первый план…');onboardingRender();}
 
 const autoStart=await sb.rpc(
   'pblap_ai_autostart_v1',
@@ -1364,6 +1379,7 @@ const autoStart=await sb.rpc(
 );
 
 if(autoStart.error)throw autoStart.error;
+if(user?.id===d.owner&&onboardingLocked())onboarding.message=ssPublicationNotice(autoStart.data);
 
 if(user?.id!==d.owner||athlete?.id!==d.athlete_id)return;
 
@@ -1458,6 +1474,85 @@ async function submitVideoLink(event){
 $('videoLinkForm').addEventListener('submit',submitVideoLink);
 $('videoSendMethod').addEventListener('change',()=>{const file=$('videoSendMethod').value==='file';$('videoDriveCard').hidden=file;$('videoFileCard').hidden=!file;});
 
+
+// Server-authoritative first-entry gate. Never infer completion from local rows.
+let onboarding={epoch:0,owner:null,status:null,entered:false,seenIncomplete:false,busy:false,checking:false,attempted:false,message:'',error:'',timer:null};
+function onboardingLocked(){return !!user&&!onboarding.entered;}
+function onboardingReset(){
+ clearTimeout(onboarding.timer);
+ onboarding={epoch:onboarding.epoch+1,owner:user?.id||null,status:null,entered:false,seenIncomplete:false,busy:false,checking:false,attempted:false,message:'',error:'',timer:null};
+ $('onboardingTelegramOutput').replaceChildren();
+ $('linkOutput').replaceChildren();
+ if($('selfIntake').open)$('selfIntake').close();
+ selfIntakeDraft=null;
+ onboardingRender();
+}
+function onboardingValid(s){return onboarding===s&&user?.id===s.owner;}
+function onboardingRender(){
+ const s=onboarding,locked=onboardingLocked(),v=s.status;
+ $('app').hidden=!user||locked;$('nav').hidden=!user||locked;$('onboarding').hidden=!locked;
+ if(!locked)return;
+ const steps=[['profile_ready','Профиль'],['intake_ready','Анкета первого плана'],['plan_ready','Создание и публикация плана'],['telegram_ready','Подключение Telegram']];
+ $('onboardingSteps').innerHTML=steps.map(([key,label])=>'<li>'+ (v?.[key]?'✓ ':'')+esc(lt(label))+'</li>').join('');
+ const step=v?.next_step,disabled=s.busy||s.checking||loading||saving;
+ $('onboardingStatus').textContent=s.message||(!v?lt('Проверяем готовность PB LAP…'):v.complete?lt('PB LAP готов. Твой первый план создан, Telegram подключён.'):step==='profile'?lt('Создай профиль спортсмена, чтобы продолжить.'):step==='intake'?lt('Ответь на вопросы. После сохранения мы автоматически создадим и опубликуем первый план.'):step==='plan'?lt('Анкета сохранена. Готовим твой первый план.'):lt('План готов. Подключи Telegram и подтверди связь в боте.'));
+ $('onboardingError').textContent=s.error;
+ for(const [id,visible] of [['onboardingProfile',step==='profile'],['onboardingIntake',step==='intake'||step==='plan'&&!s.busy],['onboardingPlan',step==='plan'&&!s.busy],['onboardingTelegram',step==='telegram'],['onboardingStart',v?.complete===true&&v?.telegram_ready===true]]){
+  $(id).hidden=!visible;$(id).disabled=disabled;
+ }
+ $('onboardingTelegramOutput').hidden=step!=='telegram';
+ $('onboardingRefresh').disabled=s.busy||s.checking;
+}
+function onboardingSchedule(s){
+ clearTimeout(s.timer);
+ if(onboardingValid(s)&&!s.entered&&!s.error&&['plan','telegram'].includes(s.status?.next_step))s.timer=setTimeout(()=>{if(onboardingValid(s)&&!document.hidden)void onboardingRefresh();},5000);
+}
+async function onboardingRefresh(){
+ const s=onboarding;if(!user||!sb||s.checking||s.busy||s.entered)return;
+ s.checking=true;s.error='';onboardingRender();
+ try{
+  const r=await sb.rpc('pblap_onboarding_status_v1');if(!onboardingValid(s))return;if(r.error)throw r.error;
+  const v=r.data;
+  if(!v||!['profile_ready','intake_ready','plan_ready','telegram_ready','complete'].every(k=>typeof v[k]==='boolean')||!['profile','intake','plan','telegram','done'].includes(v.next_step)||v.complete&&(!v.profile_ready||!v.intake_ready||!v.plan_ready||!v.telegram_ready||v.next_step!=='done'))throw Error(lt('Не удалось проверить готовность. Нажми «Проверить ещё раз».'));
+  if(s.status?.next_step!==v.next_step&&v.next_step!=='plan')s.message='';
+  s.status=v;
+  if(!v.complete)s.seenIncomplete=true;
+  if(v.complete&&!s.seenIncomplete){s.entered=true;onboardingRender();go('today');coachEntry();athleteEntry();manualVideoEntry();}
+ }catch(e){if(onboardingValid(s)){s.error=lt('Не удалось проверить готовность PB LAP. ')+ltText(e.message||'Проверь соединение и попробуй ещё раз.');}}
+ finally{if(onboardingValid(s)){s.checking=false;onboardingRender();onboardingSchedule(s);}}
+ if(onboardingValid(s)&&!s.error&&s.status?.next_step==='plan'&&!s.attempted&&!loading&&!saving)await onboardingAutostart();
+}
+async function onboardingAutostart(){
+ const s=onboarding;if(!onboardingValid(s)||s.busy||s.checking||loading||saving||!athlete||s.status?.next_step!=='plan')return;
+ s.busy=true;s.attempted=true;s.error='';s.message=lt('Создаём и публикуем первый план…');onboardingRender();
+ try{
+  const r=await sb.rpc('pblap_ai_autostart_v1',{p_athlete_id:athlete.id});if(!onboardingValid(s))return;if(r.error)throw r.error;
+  s.message=ssPublicationNotice(r.data);
+ }catch(e){if(onboardingValid(s))s.error=ltText(e.message||'Не удалось создать план. Попробуй ещё раз.');}
+ finally{if(onboardingValid(s)){s.busy=false;onboardingRender();}}
+ if(!onboardingValid(s))return;
+ if(!s.error)await loadData();
+}
+$('onboardingProfile').addEventListener('click',async()=>{const s=onboarding;await createAthlete();if(onboardingValid(s)&&!athlete){s.error=$('saveNotice').textContent||$('loadError').textContent||lt('Не удалось создать профиль. Попробуй ещё раз.');onboardingRender();}});
+$('onboardingIntake').addEventListener('click',ssOpen);
+$('onboardingPlan').addEventListener('click',onboardingAutostart);
+$('onboardingTelegram').addEventListener('click',async()=>{
+ const s=onboarding;if(s.busy||s.status?.next_step!=='telegram')return;
+ s.busy=true;onboardingRender();await makeLink();
+ if(!onboardingValid(s))return;
+ $('onboardingTelegramOutput').innerHTML=$('linkOutput').innerHTML.replaceAll(lt('Обновить данные'),lt('Проверить ещё раз'));
+ s.busy=false;onboardingRender();onboardingSchedule(s);
+});
+$('onboardingRefresh').addEventListener('click',async()=>{await loadData();});
+$('onboardingSignOut').addEventListener('click',async()=>{await signOut();if(user){onboarding.error=$('signOutError').textContent;onboardingRender();}});
+$('onboardingStart').addEventListener('click',async()=>{
+ const s=onboarding;await onboardingRefresh();
+ if(!onboardingValid(s)||s.error||!s.status?.complete||!s.status?.telegram_ready)return;
+ s.entered=true;clearTimeout(s.timer);onboardingRender();go('today');void loadData();
+});
+function onboardingResume(){if(onboardingLocked()&&!document.hidden)void onboardingRefresh();}
+window.addEventListener('focus',onboardingResume);
+document.addEventListener('visibilitychange',onboardingResume);
 
 (async()=>{try{if(!window.supabase)throw new Error(lt('Не удалось загрузить библиотеку входа. Проверьте интернет и перезагрузите страницу.'));sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);let authChanged=false, authRevision=0;sb.auth.onAuthStateChange((event,session)=>{if(event==='INITIAL_SESSION')return;authChanged=true;const revision=++authRevision;if(event==='SIGNED_OUT'){showSession(null);return;}if(session?.user&&session.user.id!==user?.id)setTimeout(()=>{if(revision===authRevision&&sb&&(!user||user.id!==session.user.id))showSession(session.user);},0);});const r=await sb.auth.getSession();if(r.error)throw r.error;if(!authChanged)showSession(r.data.session?.user||null);}catch(e){$('bootStatus').hidden=true;$('login').hidden=false;$('authError').textContent=authFriendlyError(e);if(!sb)$('signInButton').disabled=true;}})();
 </script>
