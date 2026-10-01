@@ -147,7 +147,8 @@ const SUPABASE_URL = 'https://okigwjigytauhtpkrvwc.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_bPkN_daGQ71NzEEZ1TrXwA_HqJstb6L';
 // Beta feature switch: retain stored gym data, expose only swimming.
 const BETA_SWIM_ONLY=true;
-function betaSwim(w){return !BETA_SWIM_ONLY||![w?.type,w?.workout_type,w?.discipline,w?.sport,w?.structured_plan?.discipline,w?.structured_plan?.sport].some(x=>['gym','dryland'].includes(x));}
+function betaImportedPlan(w){return w?.source==='external_coach'&&!!w?.structured_plan?.source_filename&&!!w?.structured_plan?.import_version;}
+function betaSwim(w){return !BETA_SWIM_ONLY||betaImportedPlan(w)||![w?.type,w?.workout_type,w?.discipline,w?.sport,w?.structured_plan?.discipline,w?.structured_plan?.sport].some(x=>['gym','dryland'].includes(x));}
 function betaWaterRows(rows){return (rows||[]).filter(betaSwim);}
 function betaFilterData(){if(!BETA_SWIM_ONLY)return;const hidden=new Set((data.workouts||[]).filter(w=>!betaSwim(w)).map(w=>w.id));data.workouts=betaWaterRows(data.workouts);for(const key of ['pblap_records','workout_analysis','adaptation_status'])if(Array.isArray(data[key]))data[key]=data[key].filter(r=>!hidden.has(r.workout_id||r.payload?.workout_id));}
 const TABLES = ['results','athlete_events','goals','assessments','performance_metrics','training_zones','training_plans','test_attempts','workouts','pblap_records','telegram_users','videos'];
@@ -1147,6 +1148,8 @@ function renderAthleteCalendar(){
  if(!$('acGrid'))return;
  const owner=athlete?.id||null;
  if(acState.owner!==owner||!acValid(acState.selected))acState={owner,selected:localDate(),mode:'month',discipline:'all',status:'all',undated:false};
+ const hasGym=(data.workouts||[]).some(w=>betaSwim(w)&&acDiscipline(w)==='dryland');
+ const disciplineSelect=$('acDiscipline');for(const o of disciplineSelect.options||[]){o.hidden=o.value!=='all'&&!hasGym;o.disabled=o.hidden;if(o.value==='all')o.textContent=lt(hasGym?'Все':'Вода');}if(!hasGym)acState.discipline='all';
  $('acMonth').value=acState.selected.slice(0,7);$('acMode').value=acState.mode;$('acDiscipline').value=acState.discipline;$('acStatus').value=acState.status;
  const period=$('acPeriod').value;
  $('acPeriod').innerHTML=lt('<option value="">Выбрать период</option>')+[...(data.training_plans||[])].filter(p=>acValid(p.start_date)).sort((a,b)=>b.start_date.localeCompare(a.start_date)).map(p=>'<option value="'+esc(p.id)+'">'+esc(p.title||lt('Период'))+' · '+esc(date(p.start_date))+' — '+esc(date(p.end_date))+'</option>').join('');
@@ -1157,10 +1160,10 @@ function renderAthleteCalendar(){
  const visible=rows.filter(w=>acState.undated?!acValid(w.workout_date):w.workout_date>=range.start&&w.workout_date<=range.end);
  const n=s=>visible.filter(w=>w.status===s).length;
  $('acTitle').textContent=acState.undated?lt('Занятия без даты'):acState.mode==='week'?date(range.start)+' — '+date(range.end):acDate(acState.selected).toLocaleDateString(languageLocale(),{month:'long',year:'numeric'});
- $('acSummary').textContent=visible.length+lt(' занятий · ')+n('planned')+lt(' запланировано · ')+n('completed')+lt(' выполнено · ')+n('skipped')+lt(' пропущено. Вода: ')+visible.filter(w=>acDiscipline(w)==='swim').length;
+ $('acSummary').textContent=visible.length+lt(' занятий · ')+n('planned')+lt(' запланировано · ')+n('completed')+lt(' выполнено · ')+n('skipped')+lt(' пропущено. Вода: ')+visible.filter(w=>acDiscipline(w)==='swim').length+(visible.some(w=>acDiscipline(w)==='dryland')?lt(' · Суша: ')+visible.filter(w=>acDiscipline(w)==='dryland').length:'');
  let grid=[lt('Пн'),lt('Вт'),lt('Ср'),lt('Чт'),lt('Пт'),lt('Сб'),lt('Вс')].map(t=>'<div class="cal-heading">'+t+'</div>').join('');
  for(let i=0;i<range.days;i++){const day=acShift(range.gridStart,i),ws=rows.filter(w=>w.workout_date===day),swim=ws.filter(w=>acDiscipline(w)==='swim').length,gym=ws.length-swim,done=ws.filter(w=>w.status==='completed').length,planned=ws.filter(w=>w.status==='planned').length,skipped=ws.filter(w=>w.status==='skipped').length;
- grid+='<button type="button" class="cal-day'+(day===localDate()?' is-today':'')+(day<range.start||day>range.end?' is-other':'')+'" data-ac-day="'+day+'" aria-pressed="'+(day===acState.selected)+'" aria-label="'+esc(date(day)+': '+ws.length+lt(' занятий; вода ')+swim+lt('; выполнено ')+done+lt(', запланировано ')+planned+lt(', пропущено ')+skipped)+'"><strong>'+Number(day.slice(-2))+'</strong>'+(swim?lt('<small>Вода ')+swim+'</small>':'')+(gym?lt('<small>Суша ')+gym+'</small>':'')+(done?'<small class="cal-done">✓ '+done+'</small>':'')+(planned?'<small>○ '+planned+'</small>':'')+(skipped?'<small class="cal-skip">− '+skipped+'</small>':'')+'</button>';
+ grid+='<button type="button" class="cal-day'+(day===localDate()?' is-today':'')+(day<range.start||day>range.end?' is-other':'')+'" data-ac-day="'+day+'" aria-pressed="'+(day===acState.selected)+'" aria-label="'+esc(date(day)+': '+ws.length+lt(' занятий; вода ')+swim+(gym?lt(', суша ')+gym:'')+lt('; выполнено ')+done+lt(', запланировано ')+planned+lt(', пропущено ')+skipped)+'"><strong>'+Number(day.slice(-2))+'</strong>'+(swim?lt('<small>Вода ')+swim+'</small>':'')+(gym?lt('<small>Суша ')+gym+'</small>':'')+(done?'<small class="cal-done">✓ '+done+'</small>':'')+(planned?'<small>○ '+planned+'</small>':'')+(skipped?'<small class="cal-skip">− '+skipped+'</small>':'')+'</button>';
  }
  $('acGrid').innerHTML=acState.undated?'':grid;
  const selected=acState.undated?visible:rows.filter(w=>w.workout_date===acState.selected);
@@ -1201,7 +1204,7 @@ function weeklyModel(workouts,reports,anchor,today){
 function weeklyText(m,name,scope){
  const value=(n,count,unit)=>count?n+' '+unit+lt(' (данные по ')+count+lt(' занятиям)'):lt('нет данных');
  const lines=[lt('PB LAP · сводка недели'),name,date(m.start)+' — '+date(m.end),scope==='coach'?lt('Только задания, доступные этому тренеру.'):lt('Мои занятия.'),
- lt('Занятий без архивных записей: ')+m.total+lt(' · вода ')+m.swim,
+ lt('Занятий без архивных записей: ')+m.total+lt(' · вода ')+m.swim+(m.gym?lt(' · суша ')+m.gym:''),
  lt('По отчётам: полностью ')+m.full+lt(' · частично ')+m.partial+lt(' · пропущено ')+m.skipped,
  lt('Без отчёта: ')+m.noReport+lt('; из них за прошедшие дни: ')+m.overdue+lt('. Отсутствие отчёта не означает пропуск.'),
  lt('План воды: ')+value(m.plan,m.planKnown,lt('м'))+lt('; без планового метража: ')+(m.swim-m.planKnown),
