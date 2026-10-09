@@ -168,7 +168,30 @@ function resetData(){profile=null;athlete=null;data={};errors={};profileIssue=''
 function state(table, message){if(!user)return empty(lt('Войдите, чтобы увидеть данные.'));if(errors[table])return '<p class="error">'+esc(errors[table])+'</p>';if(!athlete)return empty(athleteIssue || lt('Профиль спортсмена ещё не создан.'));return data[table].length ? null : empty(message);}
 function eventLabel(x){if(x.environment==='open_water')return (Number(x.distance_m)>=1000?Number(x.distance_m)/1000+lt(' км'):x.distance_m+lt(' м'))+' · Open Water';return [present(x.distance_m)?x.distance_m+' '+(x.course==='SCY'?lt('ярд'):lt('м')):null,present(x.stroke)?tr(x.stroke):null,x.course].filter(Boolean).join(' · ') || lt('Дистанция не указана');}
 function goalHTML(g){const event=data.athlete_events.find(e=>e.id===g.event_id);return '<article class="item"><div class="label">'+esc(tr(g.goal_type))+'</div><div class="title">'+(present(g.target_time_seconds)?esc(fmt(g.target_time_seconds))+lt(' <small>с / мин:с</small>'):lt('Время не задано'))+'</div><p>'+esc(event?eventLabel(event):(g.event_id?lt('Дистанция недоступна'):lt('Общая цель')))+'</p>'+ (g.competition?'<p class="mut">'+esc(g.competition)+'</p>':'')+lt('<p class="mut">Срок: ')+esc(date(g.target_date))+(g.status?' · '+esc(tr(g.status)):'')+'</p>'+button('goal-edit',lt('Изменить цель'),g.id)+'</article>';}
-function planHTML(p){return '<article class="item"><span class="badge">'+esc(tr(p.status))+'</span><div class="title">'+esc(p.title||lt('План подготовки'))+'</div>'+(p.phase?lt('<p class="mut">Этап: ')+esc(p.phase)+'</p>':'')+lt('<details><summary>Описание периода</summary><p style="white-space:pre-wrap">')+esc(p.main_goal||lt('Цель плана не указана'))+'</p></details><p class="mut">'+esc(date(p.start_date))+' — '+esc(date(p.end_date))+'</p></article>';}
+function planLifecycle(p,today=localDate()){
+ if(p.status==='draft')return 'draft';
+ if(p.status==='completed'||(p.end_date&&p.end_date<today))return 'completed';
+ if(p.status!=='active')return p.status;
+ return p.start_date&&p.start_date>today?'upcoming':'current';
+}
+function planContextHTML(p){
+ const sessions=data.workouts.filter(w=>w.structured_plan?.period_id===p.id&&betaSwim(w));
+ if(!sessions.length)return '';
+ const completed=sessions.filter(w=>w.status==='completed').length;
+ const meters=sessions.reduce((n,w)=>n+(Number(w.total_distance)||0),0);
+ const correction=sessions.some(w=>w.structured_plan?.time_budget?.needs_pace_confirmation||w.structured_plan?.time_estimate_correction);
+ return '<p>'+esc(lt('Блок: '))+sessions.length+esc(lt(' занятий · '))+meters+esc(lt(' м. Выполнено: '))+completed+' / '+sessions.length+'</p><p class="mut">'+esc(lt('Это текущий блок подготовки, а не весь путь до старта. После блока обнови анкету для следующего плана. Отчёты о нагрузке помогают корректировать следующие занятия.'))+'</p>'+(correction?'<p class="notice">'+esc(lt('Длительность приблизительная: уточни полное время на дистанции и комфортный темп в анкете. Оценка времени не задаёт темп плавания.'))+'</p><button class="secondary" data-entry="intake">'+esc(lt('Уточнить анкету'))+'</button>':'');
+}
+function planHTML(p){const label={current:'Текущий блок',upcoming:'Следующий блок',completed:'Период завершён',draft:'Черновик'}[planLifecycle(p)]||tr(p.status);return '<article class="item"><span class="badge">'+esc(lt(label))+'</span><div class="title">'+esc(p.title||lt('План подготовки'))+'</div>'+(p.phase?lt('<p class="mut">Этап: ')+esc(p.phase)+'</p>':'')+lt('<details><summary>Описание периода</summary><p style="white-space:pre-wrap">')+esc(p.main_goal||lt('Цель плана не указана'))+'</p></details><p class="mut">'+esc(date(p.start_date))+' — '+esc(date(p.end_date))+'</p>'+planContextHTML(p)+'</article>';}
+function ssValidateRaceTimes(a){
+ if(a.goal!=='race')return;
+ const distance=Number(a.event?.distance_m);
+ for(const key of ['current_pb_seconds','target_time_seconds']){
+  const seconds=Number(a[key]);
+  if(!(distance>0)||!Number.isFinite(seconds)||seconds<=0||seconds*100/distance<30)throw Error(lt('Укажи полное время на выбранную дистанцию в минутах и секундах, а не темп на 100 м. Например, 90:00 означает 90 минут. Комфортный темп вводится отдельно.'));
+ }
+}
+
 function bests(){const groups=new Map();for(const r of data.results){const n=number(r.time_seconds);if(n===null||n<=0||!r.event||(!r.course&&!/ OW$/.test(r.event)))continue;const key=JSON.stringify([canonicalResultName(r.event),r.course]);if(!groups.has(key)||n<Number(groups.get(key).time_seconds))groups.set(key,r);}return [...groups.values()].sort((a,b)=>String(a.event).localeCompare(String(b.event),'ru')||String(a.course).localeCompare(String(b.course)));}
 function bestHTML(){const s=state('results',lt('Результатов пока нет. Личные рекорды появятся после добавления результатов.'));if(s)return s;const rows=bests();return rows.length?'<div class="grid">'+rows.map(r=>'<div class="metric"><div class="big">'+esc(fmt(r.time_seconds))+'</div><div class="mut">'+esc(r.event)+' · '+esc(r.course||'Open Water')+'</div></div>').join('')+'</div>':empty(lt('Для сравнения нужны время, дистанция и длина бассейна.'));}
 // Published training_plans are active; drafts live separately. Keep selection shared by both Plan panels.
@@ -1313,9 +1336,9 @@ function renderSelfPlan(){if(!$('selfPlan'))return;renderBetaPlanOnboarding();co
 function ssOpen(){if(!user||!athlete||loading||saving)return;if(selfIntakeDraft?.payload&&selfIntakeDraft.owner===user.id){$('selfIntake').showModal();return;}const previous=records('self_service_intake')[0]?.payload?.answers||{},settings=records('settings')[0]?.payload||{},primary=data.athlete_events.find(e=>e.priority==='primary');const a={...previous};if(!previous.event&&primary)a.event={environment:primary.environment||'pool',stroke:primary.stroke==='individual_medley'?'medley':primary.stroke,distance_m:primary.distance_m,pool_m:primary.course==='LCM'?50:primary.course==='SCM'?25:undefined};if(!previous.volume&&Number.isFinite(settings.weekly_m))a.volume={meters:settings.weekly_m,unit:'per_week'};if(!previous.current_sessions_week&&settings.days)a.current_sessions_week=settings.days;
  selfIntakeDraft={owner:user.id,athlete_id:athlete.id,id:crypto.randomUUID(),payload:null};$('selfIntakeFields').disabled=false;$('selfIntakeError').textContent='';let s=lt('<h3>1. Исходный уровень</h3>')+ssInput('age',lt('Укажи возраст'),'number',a.age||'','required min="1" max="100" step="1" inputmode="numeric"')+ssSelect('can_swim',lt('Можешь самостоятельно плавать?'),[['yes',lt('Да')],['no',lt('Нет')]],a.can_swim)+ssSelect('experience',lt('Как ты тренируешься сейчас?'),[['regular',lt('Регулярно')],['after_break',lt('Возвращаюсь после перерыва')],['starting_independent',lt('Начинаю самостоятельные занятия')]],a.experience);
  s+=lt('<h3>2. Цель</h3>')+ssSelect('goal',lt('Главная цель'),[['race',lt('Подготовиться к дистанции')],['fitness',lt('Поддерживать форму')],['technique',lt('Улучшить технику')],['return',lt('Вернуться после перерыва')]],a.goal||(primary?'race':''))+'<div id="ssRace">'+ssSelect('environment',lt('Среда'),[['pool',lt('Бассейн')],['open_water',lt('Открытая вода')]],a.event?.environment)+ssSelect('distance',lt('Дистанция, м'),[50,100,200,400,800,1500,1000,2500,3000,5000,10000].map(x=>[String(x),String(x)]),String(a.event?.distance_m||''))+ssSelect('stroke',lt('Стиль'),[['freestyle',lt('Кроль')],['breaststroke',lt('Брасс')],['backstroke',lt('Спина')],['butterfly',lt('Баттерфляй')],['medley',lt('Комплекс')]],a.event?.stroke)+ssSelect('event_pool',lt('Бассейн старта'),[['25',lt('25 м')],['50',lt('50 м')]],String(a.event?.pool_m||''),false)+ssInput('race_date',lt('Дата старта, если известна'),'date',a.race_date==='unknown'?'':a.race_date)
-+ssInput('current_pb',lt('Текущий PB на дистанции'),'text',a.current_pb_seconds?fmt(a.current_pb_seconds):'','required maxlength="12" placeholder="1:02.00"')
++ssInput('current_pb',lt('PB: полное время на выбранную дистанцию'),'text',a.current_pb_seconds?fmt(a.current_pb_seconds):'','required maxlength="12" placeholder="Например: 90:00 — 90 минут"')
 +ssInput('pb_date',lt('Когда показан текущий PB'),'date',a.pb_date||'','required')
-+ssInput('target_time',lt('Целевое время'),'text',a.target_time_seconds?fmt(a.target_time_seconds):'','required maxlength="12" placeholder="59.50"')
++ssInput('target_time',lt('Цель: полное время на выбранную дистанцию'),'text',a.target_time_seconds?fmt(a.target_time_seconds):'','required maxlength="12" placeholder="Например: 75:00 — 75 минут"')
 +ssSelect('secondary_distance','Дополнительная дистанция, м (необязательно)',[['','Нет'],...[50,100,200,400,800,1500,1000,2500,3000,5000,10000].map(x=>[String(x),String(x)])],String(a.secondary_event?.distance_m||''),false)
 +ssSelect('secondary_environment','Среда дополнительной дистанции',[['pool','Бассейн'],['open_water','Открытая вода']],a.secondary_event?.environment||'pool',false)
 +ssSelect('secondary_stroke','Стиль дополнительной дистанции',[['freestyle','Кроль'],['breaststroke','Брасс'],['backstroke','Спина'],['butterfly','Баттерфляй'],['medley','Комплекс']],a.secondary_event?.stroke||a.event?.stroke||'freestyle',false)
@@ -1351,6 +1374,7 @@ $('selfIntakeForm').addEventListener('submit',async e=>{e.preventDefault();const
 }
 
 if(f.comfortable_pace)a.comfortable_pace_seconds=parseTime(f.comfortable_pace);
+ssValidateRaceTimes(a);
 const match=await ssAdaptiveMatch(a);
 if(user?.id!==d.owner||athlete?.id!==d.athlete_id)return;
 
